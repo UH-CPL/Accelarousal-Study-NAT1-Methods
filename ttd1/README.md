@@ -28,14 +28,25 @@ PLOTLY_API_KEY <- "<Your Plotly API Key>"
 ```
 
 ## Preprocessing Script Set
-### 1. Time-wise preprocessing
+Run following scripts sequentially.
+### 1. Process and disjoin data of drives
+Run `preprocess/preprocessDrives.R`.
+### 2. Merge data
+- Time-wise preprocessing
 Run `preprocess/preprocessTimeWise.R`.
-
-### 2. Distance-wise preprocessing
+- Distance-wise preprocessing
 Run `preprocess/preprocessDistanceWise.R`.
 
 ## Main Script Set
-(TBU)
+### 1. Drive 1 (No stressor) Analysis
+Run the notebook `notebooks/analysisDrive1_Distance.Rmd`.
+### 2. Drive 2 (Cognitive stressor) Analysis
+Run the notebook `notebooks/analysisDrive2_Distance.Rmd`.
+### 3. Drive 3 (No stressor) Analysis
+Run the notebook `notebooks/analysisDrive3_Distance.Rmd`.
+### 4. Drive 4 (Unintended acceleration event at the end) Analysis
+This drive is aka `Failure Drive`.  
+Run the notebook `notebooks/analysisDrive4_Distance.Rmd`.
 
 ## Additional Tools
 ### Style Guide

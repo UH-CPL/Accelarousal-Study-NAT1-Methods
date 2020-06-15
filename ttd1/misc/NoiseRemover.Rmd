@@ -1,0 +1,67 @@
+---
+title: "Noise Remover with FFT (For Tanim)"
+output: html_notebook
+---
+
+
+## Load Libraries
+```{r}
+library(rjson)
+library(tidyverse)
+
+source("downsample.R")
+source("denoise.R")
+
+# persons = c("01", "04", "05", "06", "07", "08", "10", "11", "12")
+persons = c("13")
+decay_wave_lengths = c(2.5, 5, 7.5, 10, 25, 35, 50, 75)
+decay_freqs = 1 / decay_wave_lengths
+```
+
+## Load data
+```{r}
+p = persons[1]
+df <- read.csv(str_interp("./data/Subject${person}_On-RoadDrive_pp.csv", list(person=p)))
+df <- subset(df, select=c("Frame.", "Time", "Perspiration"))
+
+pp <- as.numeric(df[["Perspiration"]])
+```
+
+## Run FFT Noise Remover
+```{r}
+decay_f = 1/100
+sps = 8
+pp_nr = remove_noise(pp, removeImpluse = T, lowpassDecayFreq = decay_f, samplePerSecond = sps)
+```
+
+## Downsample
+```{r}
+df$pp_nr <- pp_nr
+df_downsampled <- downsample_using_mean(df, c("Perspiration", "pp_nr"))
+```
+
+## Plot
+```{r}
+# install.packages("plotly")
+library(plotly)
+packageVersion('plotly')
+Sys.setenv("plotly_username"="thuynh32")
+Sys.setenv("plotly_api_key"="xcSv1yzujDc1IGEwQlr2")
+```
+
+```{r}
+len <- length(df_downsampled)
+extractedLen = length(df_downsampled$Time) # 1 hour data for better visualization. Might choose full length in need.
+x <- as.numeric(df_downsampled[["Time"]])[1:extractedLen]
+y_pp <- as.numeric(df_downsampled[["Perspiration"]])[1:extractedLen]
+y_pp_nr <- as.numeric(df_downsampled[["pp_nr"]])[1:extractedLen]
+```
+
+```{r}
+data <- data.frame(x, y_pp, y_pp_nr)
+p <- plot_ly(data, x = ~x, y = ~y_pp, name = 'Original PP', type = 'scatter', mode = 'lines') %>%
+  add_trace(y = ~y_pp_nr, name = 'PP NR', mode = 'lines') 
+
+chart_link = api_create(p, filename="line-pp")
+chart_link
+```

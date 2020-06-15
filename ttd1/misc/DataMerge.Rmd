@@ -1,0 +1,462 @@
+---
+title: "Data Merge"
+output: html_notebook
+---
+
+## Load libraries
+```{r}
+# install.packages("plotly")
+# install.packages("latex2exp")
+# install.packages("BiocManager") 
+# BiocManager::install("EBImage")
+library(EBImage)
+library(plotly)
+library(ggplot2)
+library(stringr)
+library(latex2exp)
+packageVersion('plotly')
+Sys.setenv("plotly_username"="thuynh32")
+Sys.setenv("plotly_api_key"="xcSv1yzujDc1IGEwQlr2")
+```
+
+## Load data
+```{r}
+# persons = c("01", "04", "05", "06", "07", "08", "10", "11", "12")
+persons = c("01", "02", "03", "04", "05", "06", "07", "08", "09", "10",
+            "12", "13", "15", "16", "17", "18",
+            "22", "23", "24", "26", "28", "29", 
+            "30", "31", "32", "41")
+
+datas = vector(mode="list", length=length(persons))
+datas_baseline = vector(mode="list", length=length(persons))
+pp_means = vector(mode="list", length=length(persons))
+
+names(datas) <- persons
+names(datas_baseline) <- persons
+names(pp_means) <- persons
+
+for (p in persons) {
+  datas[[p]] <- read.csv(str_interp("../../../data/TT1/preprocessed/T0${person}/T0${person}_Drive_4.csv", list(person=p)))
+  datas_baseline[[p]] <- read.csv(str_interp("../../../data/TT1/preprocessed/T0${person}/T0${person}_Drive_1.csv", list(person=p)))
+  
+  # Compute the mean
+  p_pp_nr <- datas_baseline[[p]]$Perspiration
+  p_pp_nr <- p_pp_nr[!is.na(p_pp_nr)]
+  pp_means[[p]] <- mean(p_pp_nr)
+}
+```
+
+### Merge PP Data
+```{r}
+all <- data.frame()
+all_baseline <- data.frame()
+for (p in persons) {
+  # On-road
+  df_p <- datas[[p]]
+  df_p$ppNormalized <- df_p$Perspiration - pp_means[[p]]
+  df_p$ppLogNormalized <- log(df_p$Perspiration) - log(pp_means[[p]])
+  df_p$Subject <- p
+  
+  all <- rbind(all, df_p)
+  
+  # Baseline
+  df_p_baseline <- datas_baseline[[p]]
+  df_p_baseline$Subject <- p
+  all_baseline <- rbind(all_baseline, df_p_baseline)
+}
+print(length(all$Time))
+print(length(all_baseline$Time))
+```
+## Prepare the PP plots
+```{r}
+vline <- function(x = 0, color = "red") {
+  list(
+    type = "line", 
+    y0 = 0, 
+    y1 = 1, 
+    yref = "paper",
+    x0 = x, 
+    x1 = x, 
+    line = list(color = color, dash="dot", width=1)
+  )
+}
+hline <- function(y = 0, color = "blue") {
+  list(
+    type = "line", 
+    x0 = 0, 
+    x1 = 1, 
+    xref = "paper",
+    y0 = y, 
+    y1 = y, 
+    line = list(color = color, dash="dot", width=1)
+  )
+}
+```
+
+### Draw all PP
+```{r}
+plot_all_PP <- plot_ly(all, x = ~Time, y = ~Perspiration, name = ~Subject, 
+                       type = 'scatter', mode = 'lines', width = 800, line=list(width=1.5),
+                       color = ~Subject) %>% layout(title="", xaxis=list(title="Time [s]"), yaxis=list(title="Perspiration"))
+htmltools::tagList(plot_all_PP)
+```
+### Draw all PP (Normalized with baseline mean)
+```{r}
+plot_all_PP <- plot_ly(all, x = ~Time, y = ~ppNormalized, name = ~Subject, 
+                       type = 'scatter', mode = 'lines', width = 800, line=list(width=1.5),
+                       color = ~Subject) %>% layout(title="", xaxis=list(title="Time [s]"), yaxis=list(title="Normalized Perspiration"))
+htmltools::tagList(plot_all_PP)
+```
+
+### Draw all Speed
+```{r}
+plot_all_Speed <- plot_ly(all, x = ~Time, y = ~Speed, name = ~Subject, 
+                       type = 'scatter', mode = 'lines', width = 800, line=list(width=1.5),
+                       color = ~Subject) %>% layout(title="", xaxis=list(title="Time [s]"), yaxis=list(title="Speed"))
+htmltools::tagList(plot_all_Speed)
+```
+
+### Draw all BR
+```{r}
+# Because the BR affects to the PP
+# What we wanna see here is if the Subject 01 is having higher BR than normal
+mean_BR_All <- mean(all$BR)
+mean_BR_P1 <- mean(all[all$Subject=='01',]$BR)
+
+ant_All <- list(y = mean_BR_All, x = 100, text = "BR mean of all", color="blue")
+plot_all_BR <- plot_ly(all, x = ~Time, y = ~Braking, name = ~Subject, 
+                       type = 'scatter', mode = 'lines', width = 800, line=list(width=1.5),
+                       color = ~Subject) %>% 
+  layout(title="", xaxis=list(title="Time [s]"), yaxis=list(title="Breath Rate [BPM]"), 
+         shapes=list(hline(mean_BR_All, color="blue")), 
+         annotations=list(ant_All))
+htmltools::tagList(plot_all_BR)
+```
+
+
+## Analyze Density
+## Configuration
+```{r}
+EXP_COLORS <- c("#00AEDB", "#D11141")
+QC_COLORS <- c("#00AEDB", "#D11141")
+```
+
+
+### PP
+```{r}
+data_PP <- all$Perspiration
+data_PP <- data_PP[!is.na(data_PP) & data_PP >= 0.001 & data_PP <= 0.016]
+data_PP_Baseline <- all_baseline$Perspiration
+data_PP_Baseline <- data_PP_Baseline[!is.na(data_PP_Baseline) & data_PP_Baseline >= 0.001 & data_PP_Baseline <= 0.016]
+
+mean_PP <- mean(data_PP)
+mean_PP_Baseline <- mean(data_PP_Baseline)
+
+df_PP <- data.frame(PP=data_PP)
+df_PP_Baseline <- data.frame(PP=data_PP_Baseline)
+df_PP$Experiment <- "On-Road Driving"
+df_PP_Baseline$Experiment <- "Baseline"
+
+df_PP_All <- rbind(df_PP, df_PP_Baseline)
+
+plot_PP <- ggplot(df_PP_All, aes(PP, fill=Experiment)) + 
+  geom_density(alpha = 0.3) + 
+  labs(x = "Perspiration", y = "PDF") + 
+  geom_vline(xintercept=mean_PP, linetype="dashed", color=EXP_COLORS[2]) + 
+  geom_vline(xintercept=mean_PP_Baseline, linetype="dashed", color=EXP_COLORS[1]) + 
+  annotate(geom="text", x=mean_PP_Baseline - 0.00015, y=600, label=paste0("Baseline Mean = ", round(mean_PP_Baseline, 4)), color="blue", angle=90, size=3) +
+  annotate(geom="text", x=mean_PP - 0.00015, y=600, label=paste0("ORD Mean = ", round(mean_PP, 4)), color="red", angle=90, size=3, vjust=0) +
+  scale_fill_manual(values=EXP_COLORS)
+# plot_PP <- ggplotly(plot_PP)
+# htmltools::tagList(plot_PP)
+print(plot_PP)
+```
+
+### PP - Baseline
+```{r}
+data_PP_Norm <- all$ppNormalized
+data_PP_Norm <- data_PP_Norm[!is.na(data_PP_Norm) & data_PP_Norm >= -0.016 & data_PP_Norm <= 0.016]
+
+mean_PP_Norm <- mean(data_PP_Norm)
+threshold_PP_Norm <- mean(data_PP_Norm)
+
+mat_PP_Norm <- matrix(data_PP_Norm,nrow = 1,ncol = length(data_PP_Norm))
+threshold_PP_Norm <- otsu(mat_PP_Norm, range=c(min(data_PP_Norm), max(data_PP_Norm)))
+
+df_PP_Norm <- data.frame(PP=data_PP_Norm)
+df_PP_Norm$Experiment <- "On-Road Driving"
+
+plot_PP_Norm <- ggplot(df_PP_Norm, aes(PP, fill=Experiment)) + 
+  geom_density(alpha = 0.3) + 
+  labs(x = TeX("$PP_{OnRoad} - PP_{Baseline}$"), y = "PDF") + 
+  theme(legend.position = "none") + 
+  geom_vline(xintercept=mean_PP_Norm, linetype="dashed", color="blue") + 
+  geom_vline(xintercept=0, linetype="dashed", color="darkgray") + 
+  geom_vline(xintercept=threshold_PP_Norm, linetype="dashed", color="red") + 
+  annotate(geom="text", x=mean_PP_Norm - 0.00015, y=550, label=paste0("Mean = ", round(mean_PP_Norm, 4)), color="blue", angle=90, size=3) +
+  annotate(geom="text", x=0 - 0.00015, y=50, label="Baseline", color="black", angle=90, size=3, vjust=0) +
+  annotate(geom="text", x=threshold_PP_Norm - 0.00015, y=550, label=paste0("Threshold = ", round(threshold_PP_Norm, 4)), color="red", angle=90, size=3, vjust=0) +
+  scale_fill_manual(values=rev(EXP_COLORS))
+#plot_PP_Norm <- ggplotly(plot_PP_Norm)
+#htmltools::tagList(plot_PP_Norm)
+print(plot_PP_Norm)
+```
+
+
+### log(PP - Baseline)
+```{r}
+data_PP_Norm <- all$ppLogNormalized
+data_PP_Norm <- data_PP_Norm[!is.na(data_PP_Norm)]
+
+mean_PP_Norm <- mean(data_PP_Norm)
+threshold_PP_Norm <- mean(data_PP_Norm)
+
+mat_PP_Norm <- matrix(data_PP_Norm,nrow = 1,ncol = length(data_PP_Norm))
+threshold_PP_Norm <- otsu(mat_PP_Norm, range=c(min(data_PP_Norm), max(data_PP_Norm)))
+
+df_PP_Norm <- data.frame(PP=data_PP_Norm)
+df_PP_Norm$Experiment <- "On-Road Driving"
+
+plot_PP_Norm <- ggplot(df_PP_Norm, aes(PP, fill=Experiment)) + 
+  geom_density(alpha = 0.3) + 
+  labs(x = TeX("All Subjects: $\\textit{log}(PP_{OnRoad}) - \\textit{log}(PP_{Baseline})$"), y = "PDF") + 
+  theme(legend.position = "none") + 
+  geom_vline(xintercept=mean_PP_Norm, linetype="dashed", color="blue") + 
+  geom_vline(xintercept=0, linetype="dashed", color="darkgray") + 
+  geom_vline(xintercept=threshold_PP_Norm, linetype="dashed", color="red") + 
+  annotate(geom="text", x=mean_PP_Norm - 0.025, y=2, label=paste0("Mean = ", round(mean_PP_Norm, 4)), color="blue", angle=90, size=3) +
+  annotate(geom="text", x=0 - 0.015, y=2, label="Baseline", color="black", angle=90, size=3, vjust=0) +
+  annotate(geom="text", x=threshold_PP_Norm - 0.015, y=2, label=paste0("Threshold = ", round(threshold_PP_Norm, 4)), color="red", angle=90, size=3, vjust=0) +
+  scale_fill_manual(values=rev(EXP_COLORS))
+#plot_PP_Norm <- ggplotly(plot_PP_Norm)
+#htmltools::tagList(plot_PP_Norm)
+print(plot_PP_Norm)
+```
+
+### Heart Rate
+```{r}
+data_HR <- all$HR
+data_HR <- data_HR[!is.na(data_HR)]
+data_HR_QC1 <- data_HR[(data_HR >= 40) & (data_HR <= 140)]
+
+mean_HR <- mean(data_HR)
+mean_HR_QC1 <- mean(data_HR_QC1)
+
+df_HR <- data.frame(HR=data_HR)
+df_HR_QC1 <- data.frame(HR=data_HR_QC1)
+df_HR$Type <- "Before QC1"
+df_HR_QC1$Type <- "After QC1"
+
+df_HR_All <- rbind(df_HR, df_HR_QC1)
+
+plot_HR <- ggplot(df_HR_All, aes(HR, fill=Type)) + 
+  geom_density(alpha = 0.3) + 
+  labs(x = "HR [BPM]", y = "PDF") + 
+  geom_vline(xintercept=mean_HR, linetype="dashed", color=QC_COLORS[2]) + 
+  geom_vline(xintercept=mean_HR_QC1, linetype="dashed", color=QC_COLORS[1]) + 
+  scale_fill_manual(values=QC_COLORS)
+# plot_HR <- ggplotly(plot_HR)
+# htmltools::tagList(plot_HR)
+print(plot_HR)
+```
+### Breath Rate
+```{r}
+data_BR <- all$BR
+data_BR <- data_BR[!is.na(data_BR)]
+data_BR_QC1 <- data_BR[data_BR >= 4 & data_BR <= 40]
+
+mean_BR <- mean(data_BR)
+mean_BR_QC1 <- mean(data_BR_QC1)
+
+df_BR <- data.frame(BR=data_BR)
+df_BR_QC1 <- data.frame(BR=data_BR_QC1)
+df_BR$Type <- "Before QC1"
+df_BR_QC1$Type <- "After QC1"
+
+df_BR_All <- rbind(df_BR, df_BR_QC1)
+
+plot_BR <- ggplot(df_BR_All, aes(BR, fill=Type)) + 
+  geom_density(alpha = 0.3) + 
+  labs(x = "BR [BPM]", y = "PDF") + 
+  geom_vline(xintercept=mean_BR, linetype="dashed", color=QC_COLORS[2]) + 
+  geom_vline(xintercept=mean_BR_QC1, linetype="dashed", color=QC_COLORS[1]) + 
+  scale_fill_manual(values=QC_COLORS)
+# plot_BR <- ggplotly(plot_BR)
+# htmltools::tagList(plot_BR)
+print(plot_BR)
+```
+
+### Brake
+```{r}
+data_Brake <- all$Braking
+data_Brake <- data_Brake[!is.na(data_Brake)]
+
+mean_Brake <- mean(data_Brake)
+
+df_Brake <- data.frame(Brake=data_Brake)
+df_Brake$Type <- "Brake [%]"
+
+mat_Brake <- matrix(data_Brake,nrow = 1,ncol = length(data_Brake))
+threshold_Brake <- otsu(mat_Brake, range=c(min(data_Brake), max(data_Brake)))
+
+plot_Brake <- ggplot(df_Brake, aes(Brake, fill=Type)) + 
+  geom_density(alpha = 0.3) + 
+  labs(x = "Brake [%]", y = "PDF") + 
+  geom_vline(xintercept=mean_Brake, linetype="dashed", color="blue") +  
+  geom_vline(xintercept=threshold_Brake, linetype="dashed", color="red") + 
+  annotate(geom="text", x=threshold_Brake - 1, y=0.05, label=paste0("Threshold = ", round(threshold_Brake, 2)), color="red", angle=90, size=3, vjust=0) + 
+  annotate(geom="text", x=mean_Brake - 1, y=0.05, label=paste0("Mean = ", round(mean_Brake, 2)), color="blue", angle=90, size=3, vjust=0) + 
+  scale_fill_manual(values=rev(QC_COLORS))
+# plot_Brake <- ggplotly(plot_Brake)
+# htmltools::tagList(plot_Brake)
+print(plot_Brake)
+```
+
+### Speed
+```{r}
+data_Speed <- all$Speed
+data_Speed <- data_Speed[!is.na(data_Speed)]
+
+mean_Speed <- mean(data_Speed)
+
+df_Speed <- data.frame(Speed=data_Speed)
+df_Speed$Type <- "Speed [km/h]"
+
+mat_Speed <- matrix(data_Speed,nrow = 1,ncol = length(data_Speed))
+threshold_Speed <- otsu(mat_Speed, range=c(min(data_Speed), max(data_Speed)))
+adj_Threshold_Speed <- 15
+
+plot_Speed <- ggplot(df_Speed, aes(Speed, fill=Type)) + 
+  geom_density(alpha = 0.3) + 
+  labs(x = "Speed [km/h]", y = "PDF") + 
+  geom_vline(xintercept=mean_Speed, linetype="dashed", color="blue") + 
+  geom_vline(xintercept=threshold_Speed, linetype="dashed", color="red") + 
+  geom_vline(xintercept=adj_Threshold_Speed, linetype="dashed", color="purple") + 
+  annotate(geom="text", x=threshold_Speed - 2, y=0.02, label=paste0("Threshold = ", round(threshold_Speed, 2)), color="red", angle=90, size=3) + 
+  annotate(geom="text", x=adj_Threshold_Speed - 2, y=0.02, label=paste0("Adj. Threshold = ", round(adj_Threshold_Speed, 2)), color="purple", angle=90, size=3) + 
+  annotate(geom="text", x=mean_Speed + 2, y=0.02, label=paste0("Mean = ", round(mean_Speed, 2)), color="blue", angle=90, size=3) + 
+  scale_fill_manual(values=rev(QC_COLORS))
+# plot_Speed <- ggplotly(plot_Speed)
+# htmltools::tagList(plot_Speed)
+
+print(plot_Speed)
+```
+
+### Accelerator
+```{r}
+
+data_Accelerator <- all$Acceleration
+data_Accelerator <- data_Accelerator[!is.na(data_Accelerator)]
+
+mean_Accelerator <- mean(data_Accelerator)
+
+df_Accelerator <- data.frame(Accelerator=data_Accelerator)
+df_Accelerator$Type <- "Acceleration [%]"
+
+mat_Accelerator <- matrix(data_Accelerator,nrow = 1,ncol = length(data_Accelerator))
+threshold_Accelerator <- 8.5 # otsu(mat_Accelerator, range=c(min(data_Accelerator), max(data_Accelerator)))
+
+plot_Accelerator <- ggplot(df_Accelerator, aes(Accelerator, fill=Type)) + 
+  geom_density(alpha = 0.3) + 
+  labs(x = "Accelerator [%]", y = "PDF") + 
+  geom_vline(xintercept=mean_Accelerator, linetype="dashed", color="blue") + 
+  geom_vline(xintercept=threshold_Accelerator, linetype="dashed", color="red") + 
+  annotate(geom="text", x=mean_Accelerator - 0.5, y=0.05, label=paste0("Mean = ", round(mean_Accelerator, 2)), color="blue", angle=90, size=3, vjust=0) + 
+  annotate(geom="text", x=threshold_Accelerator - 0.5, y=0.05, label=paste0("Threshold = ", round(threshold_Accelerator, 2)), color="red", angle=90, size=3, vjust=0) + 
+  scale_fill_manual(values=rev(QC_COLORS))
+
+# plot_Accelerator <- ggplotly(plot_Accelerator)
+# htmltools::tagList(plot_Accelerator)
+print(plot_Accelerator)
+```
+
+### Steering
+```{r}
+
+data_Steering <- all$Steering
+data_Steering <- data_Steering[!is.na(data_Steering) & abs(data_Steering) < 500]
+data_Steering_QC1 <- data_Steering[abs(data_Steering) <= 360]
+
+mean_Steering <- mean(data_Steering)
+mean_Steering_QC1 <- mean(data_Steering_QC1)
+
+df_Steering <- data.frame(Steering=data_Steering)
+df_Steering_QC1 <- data.frame(Steering=data_Steering_QC1)
+df_Steering$Type <- "Before QC1"
+df_Steering_QC1$Type <- "After QC1"
+
+df_Steering_All <- rbind(df_Steering, df_Steering_QC1)
+
+plot_Steering <- ggplot(df_Steering_All, aes(Steering, fill=Type)) + 
+  geom_density(alpha = 0.3) + 
+  labs(x = "Steering [Degree]", y = "PDF") + 
+  geom_vline(xintercept=mean_Steering, linetype="dashed", color=QC_COLORS[2]) + 
+  geom_vline(xintercept=mean_Steering_QC1, linetype="dashed", color=QC_COLORS[1]) + 
+  scale_fill_manual(values=QC_COLORS)
+# plot_Steering <- ggplotly(plot_Steering)
+# htmltools::tagList(plot_Steering)
+
+print(plot_Steering)
+```
+
+
+## Map
+```{r}
+Sys.setenv('MAPBOX_TOKEN' = 'pk.eyJ1IjoidGh1eW5oMzIiLCJhIjoiY2p6endwbXY3MjJ0cTNtbWwzN3E0enZuciJ9.fpzzkDjWHb0LOcTog8B6Lg')
+MAP_MODE_COLORS <- c("#7c91f5", "#ea4335")
+
+all$IN_Lat_Degree <- all$IN_Lat / 60
+all$IN_Long_Degree <- all$IN_Long / 60
+mapCenter <- list(lat = mean(all$IN_Lat_Degree), lon = mean(all$IN_Long_Degree))
+```
+
+### Map of Speed
+```{r warning=FALSE}
+all$cls_Speed <- ifelse(all$Speed > threshold_Speed, "High Speed", "Low Speed")
+all$diff_Speed <- abs(all$Speed - threshold_Speed)
+pMap_Speed <- all %>% plot_mapbox(lat=~IN_Lat_Degree, lon=~IN_Long_Degree, split=~cls_Speed, size=~diff_Speed, mode = 'scattermapbox', hoverinfo='text', text=~Subject, alpha = 1, opacity=0.1, height=600) %>%
+              layout(title = 'Speeding spots',
+                     legend = list(orientation = 'h', font = list(size = 8)),
+                     colorway=rev(MAP_MODE_COLORS),
+                     mapbox = list(zoom = 12, center = mapCenter))
+htmltools::tagList(pMap_Speed)
+```
+### Map of Accelerator
+```{r warning=FALSE}
+all$cls_Accel <- ifelse(all$Accelerator > threshold_Accelerator, "High Acceleration", "Low Acceleration")
+pMap_Accel <- all %>% plot_mapbox(lat=~IN_Lat_Degree, lon=~IN_Long_Degree, split=~cls_Accel, size=~Accelerator, height=600,
+              mode = 'scattermapbox', hoverinfo='text', text=~Subject, alpha = 1, opacity=0.1) %>%
+              layout(title = 'Acceleration spots',
+                     legend = list(orientation = 'h', font = list(size = 8)),
+                     colorway=rev(MAP_MODE_COLORS),
+                     mapbox = list(zoom = 12, center = center))
+htmltools::tagList(pMap_Accel)
+```
+
+### Map of Brake
+```{r warning=FALSE}
+all$cls_Brake <- ifelse(all$Brake > threshold_Brake, "High Brake", "Low Brake")
+all_Brake <- all[order(all$cls_Brake, decreasing = F),]
+pMap_Brake <- all_Brake %>% plot_mapbox(lat=~IN_Lat_Degree, lon=~IN_Long_Degree, split=~cls_Brake, size=~Brake, height=600,
+              mode = 'scattermapbox', hoverinfo='text', text=~Subject, alpha = 1, opacity=0.1) %>%
+              layout(title = 'Brake spots',
+                     legend = list(orientation = 'h', font = list(size = 8)),
+                     colorway=rev(MAP_MODE_COLORS),
+                     mapbox = list(zoom = 12, center = center))
+htmltools::tagList(pMap_Brake)
+```
+
+### Map of PP
+```{r warning=FALSE}
+all$cls_PP <- ifelse(!is.na(all$ppNormalized) & all$ppNormalized >= threshold_PP_Norm, "High PP", "Low PP")
+all_PP <- all[order(all$cls_PP, decreasing = F),]
+pMap_PP <- all_PP %>% plot_mapbox(lat=~IN_Lat_Degree, lon=~IN_Long_Degree, split=~cls_PP, size=~ppNormalized, height=600,
+              mode = 'scattermapbox', hoverinfo='text', text=~paste(Subject, ": ", ppNormalized), alpha = 1, opacity=0.1) %>%
+              layout(title = 'PP spots',
+                     legend = list(orientation = 'h', font = list(size = 8)),
+                     colorway=rev(MAP_MODE_COLORS),
+                     mapbox = list(zoom = 12, center = center))
+htmltools::tagList(pMap_PP)
+```
+
+

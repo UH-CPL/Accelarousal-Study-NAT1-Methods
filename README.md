@@ -1,4 +1,5 @@
 # Driver Prediction
+Predict types of drivers based on data from 2 studies: On-road Driving Study (ORD) and Test Track Driving Study 1 (TTD1).
 
 ## Getting Started
 ### Prerequisites
@@ -9,16 +10,6 @@
 To install required R packages, run script `setup.R` in each study folder.
 
 ## Folder Structure
-- `ord`: On-road Driving Study.
-- `ttd1`: Test Track Driving 1.
+- `ord`: On-road Driving Study. Open project file `On-road Driving Study.Rproj` with RStudio.
+- `ttd1`: Test Track Driving 1. Open project file `Test Track Driving Study.Rproj` with RStudio.
 - `reports`: Rmd files for generating reports. Such as: supplementary.
-
-## Additional Tools
-### Style Guide
-http://jef.works/R-style-guide/
-
-### Install Styler
-In RStudio, run following commands:
-```r
-install.packages("styler")
-```

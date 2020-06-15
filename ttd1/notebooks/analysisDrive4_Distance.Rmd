@@ -1,0 +1,609 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+if(!require("plotly")) {install.packages("plotly")}
+
+# install.packages("latex2exp")
+# install.packages("BiocManager") 
+# install.packages("corrplot")
+# BiocManager::install("EBImage")
+
+if(!require("lme4")){install.packages("lme4")}
+if(!require("lmerTest")){install.packages("lmerTest")}
+if(!require("nlme")){install.packages("nlme")}
+if(!require("formattable")){install.packages("formattable")}
+if(!require("xgboost")){install.packages("xgboost")}
+if(!require("processx")) {install.packages("processx")}
+
+library(plotly)
+library(lme4)
+library(lmerTest)
+library(nlme)
+library(formattable)
+library(xgboost)
+
+### Load libraries
+library(EBImage)
+library(ggplot2)
+library(stringr)
+library(gridExtra)
+library(latex2exp)
+packageVersion('plotly')
+Sys.setenv("plotly_username"="thuynh32")
+Sys.setenv("plotly_api_key"="xcSv1yzujDc1IGEwQlr2")
+
+```
+
+```{r}
+colorBlue = "#007fff"
+colorRed = "#ff7f7f"
+colorGray = "#cccccc"
+colorGreen = "#11ff00"
+
+all_Drive4 <- read.csv('../../../data/TT1/preprocessed/All/TT1_Drive_4_30m_30m.csv')
+all_Drive4$Subject <- as.factor(all_Drive4$Subject)
+all_Drive4$logPerspiration <- log(all_Drive4$Perspiration)
+
+persons         = c("01",  "02", "03", "04", "05",  "06",  "07", 
+                    "09",  "12", "13", "15", "16",  "17",  "18", 
+                    "22",  "24", "29", "30", "31",  "32",  "41")
+
+# starting_points = c( 669 , 668 , 676 , 687 , 680 ,  676 ,  678 ,
+#                      693 , 722 , 723 , 677 , 679 ,  711 ,  707 ,  
+#                      699 , 679 , 684 , 688 , 686 ,  696 ,  702 )
+# 
+# ending_points   = c( 741 , 786 , 749 , 782 , 736 ,  756 ,  768 ,  
+#                      812 , 853 , 792 , 783 , 772 ,  799 ,  781 ,  
+#                      777 , 763 , 795 , 791 , 832 ,  755 ,  758 )
+
+peak_points     = c( 67 ,  86 ,  73 ,  73 ,  73 ,  64 ,  73 ,  79 ,  69 ,  64 ,  68 ,  67 ,  77 ,  68 ,  82 ,  67 ,  72 ,  72 ,  71 ,  68 ,  64 )
+
+# Driving time
+driving_times = vector(mode="list", length = length(persons))
+names(driving_times) <- persons
+
+activity_names = vector(mode="list", length = length(persons))
+names(activity_names) <- persons
+
+acc_start_times = vector(mode="list", length = length(persons))
+names(acc_start_times) <- persons
+acc_end_times = vector(mode="list", length = length(persons))
+names(acc_end_times) <- persons
+
+stressor_start_times = vector(mode="list", length = length(persons))
+names(stressor_start_times) <- persons
+stressor_end_times = vector(mode="list", length = length(persons))
+names(stressor_end_times) <- persons
+
+complete_times = vector(mode="list", length = length(persons))
+names(complete_times) <- persons
+
+data_baseline = vector(mode="list", length=length(persons))
+pp_baseline = vector(mode="list", length=length(persons))
+
+names(data_baseline) <- persons
+names(pp_baseline) <- persons
+
+# Number of peaks
+
+PREV_DISTANCE = 600
+TRACKING_DISTANCE = 150
+DRIVE_MODE = 4
+```
+
+```{r}
+getActivityName <- function(x, fullname=F) {
+  if(x == 1) return(ifelse(fullname, "Normal", "NO"))
+  if(x == 2) return(ifelse(fullname, "Cognitive", "C"))
+  if(x == 3) return(ifelse(fullname, "Motoric", "M"))
+}
+
+for (p in persons) {
+  pData <- all_Drive4[all_Drive4$Subject==as.integer(p) | all_Drive4$Subject==p,]
+  pAcc <- pData[pData$Failure>0.5,] # Failure = 1
+  acc_start_times[[p]] <- min(pAcc$Distance)
+  acc_end_times[[p]] <- max(pAcc$Distance)
+  
+  activity_names[[p]] <- getActivityName(pData[pData$Time==60,]$Activity, fullname = T)
+  
+  pStressor = pData[pData$Activity>1.5,] # Stressor = 2, 3
+  if (nrow(pStressor) > 0) {
+    stressor_start_times[[p]] <- min(pStressor$Distance)
+    stressor_end_times[[p]] <- max(pStressor$Distance)
+  } else {
+    stressor_start_times[[p]] <- NULL
+    stressor_end_times[[p]] <- NULL
+  }
+}
+```
+
+```{r}
+idx <- 1
+plt_AllAcc <- vector(mode="list", length=length(persons)) 
+names(plt_AllAcc) <- persons
+
+COLOR_ACC = "#02A3C8"
+COLOR_PP = "#F28E8E"
+COLOR_BRAKE = "#888888"
+
+y1 <- list(
+  tickfont = list(color = COLOR_ACC),
+  title="Degree",
+  range=c(0, 100)
+)
+y2 <- list(
+  tickfont = list(color = COLOR_PP),
+  overlaying = "y",
+  side = "right",
+  title = "Log Perspiration",
+  showgrid = FALSE,
+  range=c(min(all_Drive4$ppLogNormalized), max(all_Drive4$ppLogNormalized))
+)
+  
+for (p in persons) {
+  pData <- all_Drive4[all_Drive4$Subject==as.integer(p) | all_Drive4$Subject==p,]
+  
+  # Baseline
+  data_baseline[[p]] <- read.csv(str_interp("../../../data/TT1/preprocessed/T0${person}/T0${person}_Drive_1.csv", list(person=p)))
+  # Compute the mean
+  p_pp_nr <- data_baseline[[p]]$Perspiration
+  p_pp_nr <- p_pp_nr[!is.na(p_pp_nr)]
+  pp_baseline[[p]] <- log(mean(p_pp_nr))
+  
+  # Incident
+  driving_times[[p]] <- max(pData$Distance)
+  
+  incident_starting_time <- acc_start_times[[p]] # starting_points[idx]
+  incident_ending_time <- acc_end_times[[p]]
+  complete_times[[p]] <- ifelse(incident_starting_time + TRACKING_DISTANCE > driving_times[[p]], driving_times[[p]], incident_starting_time + TRACKING_DISTANCE)
+  
+  from_time <- ifelse(incident_starting_time - PREV_DISTANCE >= 0, incident_starting_time - PREV_DISTANCE, 0)
+  to_time <- complete_times[[p]]
+  
+  # print(paste("From", from_time))
+  # print(paste("Incident", incident_starting_time))
+  # print(paste("To", to_time))
+  
+    
+  pDataBefore <- pData[pData$Distance < incident_starting_time & pData$Distance >= from_time,]
+  pDataAfter <- pData[pData$Distance >= incident_starting_time & pData$Distance <= to_time,]
+  
+  # print(nrow(pDataBefore))
+  # print(nrow(pDataAfter))
+  
+  ppMeanBefore <- mean(pDataBefore$ppLogNormalized)
+  ppMeanAfter <- mean(pDataAfter$ppLogNormalized)
+  
+  dir.create(file.path('../figures/drive/', paste0('Drive_', DRIVE_MODE)), showWarnings = FALSE)
+  fname <- str_interp('../figures/drive/Drive_${drive}/P${person}.svg', list(drive=DRIVE_MODE, person=p)) 
+  
+  pData <- pData[pData$Distance >= from_time,]
+  plot_Acc <- plot_ly(pData, x = ~Distance, height=400, width=900) %>%
+              add_trace(name="Acceleration", y = ~Acceleration, type = 'scatter', mode = 'lines', line=list(width=1.5, color=COLOR_ACC)) %>% 
+              add_trace(name="Brake", y = ~Braking, type = 'scatter', mode = 'lines', line=list(width=1.5, color=COLOR_BRAKE)) %>%
+              add_trace(name="PP", y = ~ppLogNormalized, type = 'scatter', mode = 'lines', line=list(width=1.5, color=COLOR_PP), yaxis = "y2") %>% 
+              add_segments(x = min(pData$Distance), xend = max(pData$Distance), y = ppMeanBefore, yend = ppMeanBefore, 
+                           yaxis = "y2", name="Mean PP (Before Incident)",
+                           line=list(color=COLOR_PP, dash = 'dot')) %>%
+              add_segments(x = min(pData$Distance), xend = max(pData$Distance), y = ppMeanAfter, yend = ppMeanAfter, 
+                           yaxis = "y2", name="Mean PP (After Incident)",
+                           line=list(color="darkred", dash = 'dot')) %>%
+              # add_segments(x = min(pData$Distance) - 0.1, xend = max(pData$Distance), y = pp_baseline[[p]], yend = pp_baseline[[p]], 
+              #              yaxis = "y2", name="Baseline PP (from Drive 1)",
+              #              line=list(color="blue", dash = 'dot')) %>%
+    
+              layout(
+                title=paste0("Subject #", p, " (Stressor=", activity_names[[p]], ")"), 
+                xaxis=list(title="Distance [m]", range=c(0)), 
+                yaxis=y1, 
+                yaxis2=y2, 
+                margin = list(l = 50, r = 50, b = 50, t = 50, pad = 4),
+                shapes = list(
+                  # Holistic period
+                  list(type = "rect", fillcolor = "red", 
+                       line = list(color = "red"), opacity = 0.3,
+                      x0 = incident_starting_time, x1 = incident_ending_time, xref = "x",
+                      y0 = 0, y1 = 100, yref = "y"),
+                  # Stressor period
+                  list(type = "rect", fillcolor = "yellow", 
+                       line = list(color = "yellow"), opacity = 0.1,
+                      x0 = stressor_start_times[[p]], x1 = incident_starting_time, xref = "x",
+                      y0 = 0, y1 = 100, yref = "y"),
+                  list(type = "rect", fillcolor = "yellow", 
+                       line = list(color = "yellow"), opacity = 0.1,
+                      x0 = incident_ending_time, x1 = stressor_end_times[[p]], xref = "x",
+                      y0 = 0, y1 = 100, yref = "y")
+                ),
+                legend = list(x = 0.1, y = 1, bgcolor = "rgba(0,0,0,0)", title="Metric"),
+                autosize = F
+              )
+  
+  # orca(plot_PP, fname)
+  idx <- idx + 1
+  plt_AllAcc[[p]] <- plot_Acc
+}
+
+htmltools::tagList(plt_AllAcc)
+```
+
+```{r, warning=FALSE}
+for (p in persons) {
+  # Save image
+  orca(plt_AllAcc[[p]], file = paste0("../figures/drive/Drive_4/T0", p, ".png"), scale = 2)
+}
+```
+
+```{r}
+idx <- 1
+behavioralColumns <- c("Subject", 
+                       "Brake_u", 
+                       "Brake_std", 
+                       "PP_before",
+                       "PP_u",  
+                       "PP_std",
+                       "PP_dev")
+behavioralMatrix <- matrix(nrow=length(persons), ncol = length(behavioralColumns))
+
+# Careful about Subject 09
+# selected_persons <- persons[persons != "09"]
+
+for (p in persons) {
+  pData <- all_Drive4[all_Drive4$Subject==as.integer(p) | all_Drive4$Subject==p,]
+  
+  incident_starting_time <- acc_start_times[[p]] # starting_points[idx]
+  incident_ending_time <- acc_end_times[[p]]
+  
+  from_time <- ifelse(incident_starting_time - PREV_DISTANCE >= 0, incident_starting_time - PREV_DISTANCE, 0)
+  to_time <- complete_times[[p]]
+    
+  dfBefore <- pData[pData$Distance < incident_starting_time & pData$Distance >= from_time,]
+  dfAfter <- pData[pData$Distance >= incident_starting_time & pData$Distance <= to_time,]
+  
+  # diffSpeed <- mean(dfAfter$Speed) - mean(dfBefore$Speed)
+  brakeMean <- mean(dfAfter$Braking)
+  brakeStd <- mean(dfAfter$Braking)
+  
+  ppMean <- mean(dfAfter$ppLogNormalized)
+  ppBefore <- mean(dfBefore$ppLogNormalized)
+  ppStd <- sd(dfAfter$ppLogNormalized)
+  
+  mid_avg <- (pp_baseline[[p]] + mean(dfBefore$ppLogNormalized)) / 2
+    
+  diffPP <- mean(dfAfter$ppLogNormalized) - mean(dfBefore$ppLogNormalized)
+  
+  behavioralMatrix[idx, ] <- c(p, 
+                               round(brakeMean, digits=5), 
+                               round(brakeStd, digits=5),
+                               round(ppBefore, digits=5),
+                               round(ppMean, digits = 5),
+                               round(ppStd, digits=5),
+                               round(diffPP, digits=5))
+  idx <- idx + 1
+}
+
+# behavioralMatrix
+
+behavioralDf <- as.data.frame(behavioralMatrix)
+names(behavioralDf) <- behavioralColumns
+
+behavioralDf
+
+```
+
+
+```{r}
+clusteringDf <- behavioralDf
+clusteringDf$Subject <- NULL
+# clusteringDf$PP_dev_norm <- as.numeric(clusteringDf$PP_dev) / as.numeric(clusteringDf$PP_u)
+# clusteringDf$PP_std_norm <- as.numeric(clusteringDf$PP_std) / as.numeric(clusteringDf$PP_u)
+clusteringDf$Brake_u <- NULL
+clusteringDf$Brake_std <- NULL
+clusteringDf$PP_before <- NULL
+clusteringDf$PP_u <- NULL
+clusteringDf$PP_std <- NULL
+# clusteringDf$PP_dev <- NULL
+
+rownames(clusteringDf) <- paste0("#", persons)
+
+for (col in names(clusteringDf)) {
+  clusteringDf[,col] <- as.numeric(as.character(clusteringDf[, col]))
+  # clusteringDf[,col] <- scale(clusteringDf[,col])
+}
+clusteringDf
+```
+
+```{r}
+dfActivity <- all_Drive4[all_Drive4$Time==60,] %>% select(c("Subject", "Activity"))
+dfActivity$ActivityName <- sapply(dfActivity$Activity, getActivityName)
+dfActivity$Subject <- as.factor(dfActivity$Subject)
+rownames(dfActivity) <- NULL
+dfActivity %>% select(c("Subject", "ActivityName"))
+```
+
+```{r}
+library(dendextend)
+
+NUMBER_OF_CLUSTERS = 3
+
+color_darkpink = "#e75480"
+CLUSTER_BRANCH_COLORS <- c("blue", "darkred", color_darkpink)[1:NUMBER_OF_CLUSTERS]
+CLUSTER_LABEL_COLORS <- c("blue", "darkred", color_darkpink)[1:NUMBER_OF_CLUSTERS]
+
+behavioralMatrixClustering <- as.matrix(clusteringDf)
+rownames(behavioralMatrixClustering) <- paste0(dfActivity$ActivityName, " - #", persons)
+distMatrix <- dist(behavioralMatrixClustering)
+hresults <- distMatrix %>% hclust
+
+hc <- hresults %>% 
+      as.dendrogram %>%
+      set("nodes_cex", NUMBER_OF_CLUSTERS) %>%
+      set("labels_col", value = CLUSTER_LABEL_COLORS, k=NUMBER_OF_CLUSTERS) %>%
+      # set("leaves_pch", 19) %>%
+      # set("leaves_col", value = c("gray"), k=NUMBER_OF_CLUSTERS) %>%    
+      set("branches_k_color", value=CLUSTER_BRANCH_COLORS, k=NUMBER_OF_CLUSTERS)
+
+plot(hc)
+legend("topright", 
+     title="Drive=Failure \nHierachical Clustering",
+     legend = c("Exceptional Increase of PP" , "Slightly Increase of PP" , "No-change or Decrease of PP"), 
+     col = c("darkred", "pink" , "blue"),
+     pch = c(20,20,20), bty = "n",  pt.cex = 1.5, cex = 0.8 , 
+     text.col = "black", horiz = FALSE, inset = c(0.4, 0.1))
+```
+
+```{r}
+# Store clustering data
+fPath <- str_interp("../../../data/TT1/preprocessed/Analysis/TT1_Drive_4_PP.csv")
+dfx <- clusteringDf
+dfx <- cbind(persons, dfx, dfActivity$ActivityName)
+names(dfx) <- c("Subject", "PP_Dev", "Activity")
+write.csv(dfx, fPath, row.names = F)
+```
+
+```{r}
+library(cluster)
+fit <- kmeans(clusteringDf, 3)
+clusplot(clusteringDf, fit$cluster, color=TRUE, shade=TRUE,
+   labels=3, lines=0)
+```
+
+```{r}
+silhouette_score <- function(k){
+  km <- kmeans(clusteringDf, centers = k, nstart=25)
+  ss <- silhouette(km$cluster, dist(clusteringDf))
+  mean(ss[, 3])
+}
+k <- 2:10
+avg_sil <- sapply(k, silhouette_score)
+plot(k, type='b', avg_sil, xlab='Number of clusters', ylab='Average Silhouette Scores', frame=FALSE)
+```
+
+
+```{r}
+# plot(clusteringDf$PP_Dev)
+# ggplot(clusteringDf, aes(PP_Mean)) + 
+#   geom_density(alpha = 0.3)
+```
+
+```{r}
+# plot(clusteringDf$PP_Dev)
+# ggplot(clusteringDf, aes(PP_Dev)) + 
+#   geom_density(alpha = 0.3)
+```
+
+### ML Model
+```{r}
+df_Drive3 <- read.csv('../data/output/Drive_3/corr_Prev_15s_Next_5s.csv')
+df_Drive3$Subject <- as.factor(df_Drive3$Subject)
+
+CLUSTER_THRESHOLD = 4
+clusters <- cutree(hresults, h=CLUSTER_THRESHOLD)
+getClusterName <- function(s) {
+  sID <- str_replace(s, "Subject ", "")
+  if (str_sub(sID[1], 1,1) != "#") {
+    sID <- paste0("#", sID)
+  }
+  return(ifelse(clusters[sID] == 1, 1, 0))
+}
+
+colClass <- sapply(persons, getClusterName)
+df_Drive3$clsPP <- as.factor(colClass)
+```
+
+```{r}
+# install.packages("randomForest")
+# install.packages("MLmetrics")
+# install.packages("caret")
+library(randomForest)
+library(ROCR)
+library(caret)
+
+# Train
+trainAndTestModel <- function(pData) {
+  pSelected <- pData
+  pSelected$Subject <- NULL
+  # pSelected$`Steering..std..` <- NULL
+  
+  # View(pSelected)
+  
+  nChicken = nrow(pSelected[pSelected$clsPP == 1,])
+  nNormal = nrow(pSelected[pSelected$clsPP == 0,])
+  
+  print(paste("Chicken =", nChicken))
+  print(paste("Normal =", nNormal))
+  
+  # Split dataset
+  set.seed(43)
+  n_folds = 4
+  
+  folds <- createFolds(factor(pSelected$clsPP), k = n_folds, list = FALSE)
+  # folds <- cut(seq(1,nrow(pSelected)), breaks=n_folds,labels=FALSE)
+  pSelected$fold <- folds
+  
+  kf_acc <- double(n_folds)
+  kf_prec <- double(n_folds)
+  kf_recall <- double(n_folds)
+  kf_f1 <- double(n_folds)
+  kf_npv <- double(n_folds)
+  
+  for (i in 1:n_folds) {
+    # train_ind <- sample(seq_len(nrow(pSelected)), size = smp_size)
+    # train <- pSelected[train_ind, ]
+    # test <- pSelected[-train_ind, ]
+    
+    # test_ind <- which(folds==i, arr.ind=T)
+    train <- pSelected[pSelected$fold != i, ] %>% select(-fold)
+    test <- pSelected[pSelected$fold == i, ] %>% select(-fold)
+    
+    print(paste("Train =", nrow(train), "Pos =", nrow(train[train$clsPP == 1,]), "Neg =", nrow(train[train$clsPP == 0,])))
+    print(paste("Test =", nrow(test), "Pos =", nrow(test[test$clsPP == 1,]), "Neg =", nrow(test[test$clsPP == 0,])))
+    
+    # Model Train
+    model <- randomForest(clsPP~., data = train, importance = TRUE, ntree=10)
+    print(importance(model))
+    # print(model)
+    
+    # Test
+    testX <- select(test, -clsPP)
+    predY <- predict(model, testX)
+    testY <- test$clsPP
+    
+    #print(levels(predY))
+    #print(levels(testY))
+    
+    # Evaluate
+    # print(table(predY, testY))
+    
+    kf_acc[i] <- mean(predY==testY)
+    kf_recall[i] <- sensitivity(predY, testY)
+    kf_prec[i] <- posPredValue(predY, testY, positive = 1)
+    kf_f1[i] <- (2 * kf_recall[i] * kf_prec[i]) / (kf_recall[i] + kf_prec[i])
+    kf_npv[i] <- negPredValue(predY, testY, positive = 1)
+    
+    # print(paste("Perf:", kf_acc[i], kf_recall[i], kf_prec[i], kf_f1[i], kf_npv[i]))
+  }
+  
+  # XGB
+  param <- list(objective       = "binary:logistic", 
+               booster          = "gbtree",
+               eval_metric      = "auc",
+               eta              = 0.1,
+               max_depth        = 5,
+               gamma            =0.8,
+               min_child_weight = 3,
+               subsample        = 1,
+               colsample_bytree = 0.5,
+               stratified       = F
+  )
+  pSelected <- pSelected %>% mutate(clsPP=ifelse(clsPP==1, 1, 0))
+  
+  # AUC
+  # aucs = c()
+  # xgb_m = xgb.cv(   params               = param,
+  #                   data = as.matrix(pSelected %>% select(-clsPP)) ,
+  #                   label =  pSelected$clsPP,
+  #                   nrounds             = 500,
+  #                   verbose             = F,
+  #                   prediction          = T,
+  #                   maximize            = T,
+  #                   nfold = n_folds,
+  #                   metrics  = "auc",
+  #                   early_stopping_rounds = 100,
+  #                   scale_pos_weight = 1)
+  # aucs =  c(aucs,as.numeric(xgb_m$evaluation_log[xgb_m$best_iteration,"test_auc_mean"]))
+  
+  # Get average performance
+  acc <- mean(kf_acc)
+  prec <- mean(kf_prec)
+  recall <- mean(kf_recall)
+  f1 <- mean(kf_f1)
+  npv <- mean(kf_npv)
+  # auc <- mean(aucs)
+ 
+  # Return 
+  rtn <- list(
+    accuracy=acc,
+    recall=recall,
+    precision=prec,
+    f1=f1,
+    npv=npv
+    # auc=auc
+  )
+  
+  print(rtn)
+}
+
+trainAndTestModel(df_Drive3)
+```
+
+
+```{r}
+library(caret)
+library(VGAM)
+
+NUM_FEATURES = 8
+
+pSelected <- df_Drive3
+pSelected$Subject <- NULL
+
+fit <- vglm(clsPP~., family=multinomial, data=pSelected)
+# summarize the fit
+summary(fit)
+
+probabilities <- predict(fit, pSelected[,1:NUM_FEATURES], type="response")
+predictions <- apply(probabilities, 1, which.max)
+predictions[which(predictions=="High")] <- levels(pSelected$clsPP)[1]
+predictions[which(predictions=="Low")] <- levels(pSelected$clsPP)[2]
+# summarize accuracy
+table(predictions, pSelected$clsPP)
+
+# x <- pSelected[,1:NUM_FEATURES]
+# y <- pSelected[,NUM_FEATURES + 1]
+# # fit model
+# fit <- plsda(x, y, probMethod="Bayes")
+# # summarize the fit
+# summary(fit)
+# # make predictions
+# predictions <- predict(fit, pSelected[,1:NUM_FEATURES])
+# # summarize accuracy
+# table(predictions, pSelected$clsPP)
+
+```
+
+
+```{r}
+library(caret)
+
+pSelected <- df_Drive3
+pSelected$Subject <- NULL
+pSelected$clsPP <- as.numeric(colClass)
+
+# define training control
+train_control <- trainControl(method = "cv", number = 4)
+
+# train the model on training set
+model <- train(clsPP ~ .,
+               data = pSelected,
+               trControl = train_control,
+               method = "glm",
+               family=binomial())
+
+# print cv scores
+summary(model)
+
+predTrain = predict(model, newdata=pSelected, type="raw")
+table(pSelected$clsPP, predTrain > 0.5)
+
+```
+
+```{r}
+formula = clsPP ~ .
+modellm <- glm(formula, data=pSelected)
+plot(modellm)
+summary(model)
+```
+
+

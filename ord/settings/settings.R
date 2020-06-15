@@ -21,7 +21,7 @@ NUMBER_OF_CLUSTERS <- 2
 CLUSTER_BRANCH_COLORS <- c("red", "blue", "#999999")
 CLUSTER_LABEL_COLORS <- c("red", "blue", "black")
 
-#### Plotly
+# Plotly
 PLOTLY_USERNAME <- "thuynh32"
 PLOTLY_API_KEY <- "xcSv1yzujDc1IGEwQlr2"
 

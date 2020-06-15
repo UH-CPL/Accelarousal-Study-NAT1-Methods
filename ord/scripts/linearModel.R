@@ -34,31 +34,33 @@ behavioralColumns <- BEHAVIORAL_COLUMNS
 behavioralMatrix <- matrix(nrow = length(persons), ncol = length(behavioralColumns))
 
 ###################### 1. Correlation of all Subjects ###################
-computeAndPlotCorrelationOfAllSubjects(all, skipPlot=T)
+computeAndPlotCorrelationOfAllSubjects(all, skipPlot = T)
 
 ###################### 2. Correlation of each Subject ####################
 for (p in persons) {
-  computeAndPlotCorrelation(p, all, behavioralMatrix, rowNo = match(p, persons), skipPlot=T)
+  computeAndPlotCorrelation(p, all, behavioralMatrix, rowNo = match(p, persons), skipPlot = T)
 }
 
 ###################### LINEAR MODEL ######################################
 ## Linear Model
-layout(matrix(c(1,2,3,4),2,2))
+layout(matrix(c(1, 2, 3, 4), 2, 2))
 
 ### 1. Linear model for all subjects
 linearModel_AllSubjects <- plotLinearModelForAllSubjects(all, usePhysiological = F, removeIncompletedSubject = F)
-plot(linearModel_AllSubjects, 
-     main = str_interp("Linear Model (Previous ${tPre}s, Next ${tNext}s)", list(tPre=TIME_PREV_SECONDS, tNext=TIME_NEXT_SECONDS)), 
-     ylab="Residual", 
-     xlab="Fitted")
+plot(linearModel_AllSubjects,
+  main = str_interp("Linear Model (Previous ${tPre}s, Next ${tNext}s)", list(tPre = TIME_PREV_SECONDS, tNext = TIME_NEXT_SECONDS)),
+  ylab = "Residual",
+  xlab = "Fitted"
+)
 
 # Store plot to a file
-fname <- str_interp('./plots/linearmodel/lm_Prev_${tPre}s_Next_${tNext}s.jpg', list(tPre=TIME_PREV_SECONDS, tNext=TIME_NEXT_SECONDS)) 
+fname <- str_interp("./plots/linearmodel/lm_Prev_${tPre}s_Next_${tNext}s.jpg", list(tPre = TIME_PREV_SECONDS, tNext = TIME_NEXT_SECONDS))
 jpeg(fname, width = 600)
-plot(linearModel_AllSubjects, 
-     main = str_interp("Linear Model (Previous ${tPre}s, Next ${tNext}s)", list(tPre=TIME_PREV_SECONDS, tNext=TIME_NEXT_SECONDS)), 
-     ylab="Residual", 
-     xlab="Fitted")
+plot(linearModel_AllSubjects,
+  main = str_interp("Linear Model (Previous ${tPre}s, Next ${tNext}s)", list(tPre = TIME_PREV_SECONDS, tNext = TIME_NEXT_SECONDS)),
+  ylab = "Residual",
+  xlab = "Fitted"
+)
 dev.off()
 
 print(summary(linearModel_AllSubjects))

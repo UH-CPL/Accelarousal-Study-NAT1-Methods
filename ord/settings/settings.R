@@ -29,8 +29,6 @@ Sys.setenv("plotly_username" = PLOTLY_USERNAME)
 Sys.setenv("plotly_api_key" = PLOTLY_API_KEY)
 
 # Colors
-colorBlue = "#007fff"
-colorRed = "#ff7f7f"
-colorGray = "#cccccc"
-
-
+colorBlue <- "#007fff"
+colorRed <- "#ff7f7f"
+colorGray <- "#cccccc"

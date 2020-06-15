@@ -34,10 +34,9 @@ behavioralColumns <- BEHAVIORAL_COLUMNS
 behavioralMatrix <- matrix(nrow = length(persons), ncol = length(behavioralColumns))
 
 ###################### 1. Correlation of all Subjects ###################
-computeAndPlotCorrelationOfAllSubjects(all, skipPlot=F)
+computeAndPlotCorrelationOfAllSubjects(all, skipPlot = F)
 
 ###################### 2. Correlation of each Subject ####################
 for (p in persons) {
-  computeAndPlotCorrelation(p, all, behavioralMatrix, rowNo = match(p, persons), skipPlot=F)
+  computeAndPlotCorrelation(p, all, behavioralMatrix, rowNo = match(p, persons), skipPlot = F)
 }
-

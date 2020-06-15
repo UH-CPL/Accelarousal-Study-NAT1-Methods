@@ -11,7 +11,7 @@ To install required R packages, run script `setup.R` in each study folder.
 ## Folder Structure
 - `ord`: On-road Driving Study.
 - `ttd1`: Test Track Driving 1.
-- `utils`: Common utility scripts.
+- `reports`: Rmd files for generating reports. Such as: supplementary.
 
 ## Additional Tools
 ### Style Guide

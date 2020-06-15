@@ -10,7 +10,7 @@ if (!require("formattable")) {
 if (!require("latex2exp")) {
   install.packages("latex2exp")
 }
-if (!require("BioManager")) {
+if (!require("BiocManager")) {
   install.packages("BiocManager")
   BiocManager::install("EBImage")
 }

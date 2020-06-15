@@ -10,10 +10,13 @@ if (!require("formattable")) {
 if (!require("latex2exp")) {
   install.packages("latex2exp")
 }
-if (!require("BioManager")) {
+if (!require("BiocManager")) {
   install.packages("BiocManager")
   BiocManager::install("EBImage")
 }
+if(!require("RColorBrewer")) {install.packages("RColorBrewer")}
+if(!require('htmltools')) {install.packages('htmltools')}
+if(!require('webshot')) {install.packages('webshot')}
 
 print("Setuping analytical packages ...")
 if (!require("corrplot")) {
@@ -44,6 +47,7 @@ if (!require("MLmetrics")) {
 if (!require("caret")) {
   install.packages("caret")
 }
+if(!require('dendextend')) {install.packages('dendextend')}
 
 print("Test packages ...")
 # library(plotly)

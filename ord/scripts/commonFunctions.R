@@ -256,7 +256,16 @@ plotLinearModelForAllSubjects <- function(all, usePhysiological = F, removeIncom
 
 
 ################## 6. ML Model #########################
-
+computePerformanceResults <- function(sdat){
+  sdat = sdat[complete.cases(sdat),]
+  acc = sum(sdat[,1] == sdat[,2])/nrow(sdat)
+  conf_mat = table(sdat)
+  specif = conf_mat[1,1]/sum(conf_mat[,1])
+  sensiv = conf_mat[2,2]/sum(conf_mat[,2])
+  preci =  conf_mat[2,2]/sum(conf_mat[2,])
+  npv =    conf_mat[1,1]/sum(conf_mat[1,])
+  return(c(acc,specif,sensiv,preci,npv))
+}
 
 
 ################## 7. Visualization ####################

@@ -47,6 +47,11 @@ Run the notebook `notebooks/analysisDrive3_Distance.Rmd`.
 ### 4. Drive 4 (Unintended acceleration event at the end) Analysis
 This drive is aka `Failure Drive`.  
 Run the notebook `notebooks/analysisDrive4_Distance.Rmd`.
+### 5. Predict arousal in Failure Drive
+Run the notebook `notebooks/analysisPP.nb.Rmd`.
+### 6. Predict arousal in Failure Drive with 4-way splitting
+Run the notebook `notebooks/analysisPP_Split4WaySeg.nb.Rmd`.
+
 
 ## Additional Tools
 ### Style Guide

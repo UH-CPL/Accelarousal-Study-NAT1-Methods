@@ -59,6 +59,7 @@ perfDf <- data.frame(
   Accuracy = double(nPerfRow),
   Precision = double(nPerfRow),
   Recall = double(nPerfRow),
+  Spec = double(nPerfRow),
   F1 = double(nPerfRow),
   NPV = double(nPerfRow),
   AUC = double(nPerfRow),
@@ -84,15 +85,22 @@ trainAndTestModel <- function(p, idx = 1, useData = "All", useCluster = F) {
   data_PP_Log_P <- pData$ppNext
   data_PP_Log_P <- data_PP_Log_P[!is.na(data_PP_Log_P)]
   mat_PP_P <- matrix(data_PP_Log_P, nrow = 1, ncol = length(data_PP_Log_P))
-  threshold_PP_Log_P <- otsu(mat_PP_P, range = c(min(data_PP_Log_P), max(data_PP_Log_P)))
+  
+  # Select a threshold
+  threshold_PP_Log_P <- NA
+  if (!is.na(p) && p == "01") { 
+    # As #01 has imbalanced distribution of PP, we manually select a threshold equal to the baseline PP
+    threshold_PP_Log_P <- mean(allBaseline[allBaseline$Subject==p,]$pp_nr2)
+  } else {
+    # Use Otsu algorithm to select a threshold to discriminate the 2 classes
+    threshold_PP_Log_P <- otsu(mat_PP_P, range = c(min(data_PP_Log_P), max(data_PP_Log_P)))
+  }
 
   pp_min <- min(data_PP_Log_P)
   pp_max <- max(data_PP_Log_P)
 
   pData$clsPP <- ifelse(pData$ppNext >= threshold_PP_Log_P, "High", "Low")
   pData$clsPP <- factor(pData$clsPP)
-
-  # print(paste("Subject", p))
 
   # Selected data
   selectedColumns <- c()
@@ -106,7 +114,7 @@ trainAndTestModel <- function(p, idx = 1, useData = "All", useCluster = F) {
     selectedColumns <- c("clsPP", "Speed_u", "Speed_std")
   } else if (useData == "AccOnly") {
     selectedColumns <- c("clsPP", "Acc_u", "Acc_std")
-  } else if (useData == "SpeedAcc") {
+  } else if (useData == "SpeedAndAcc") {
     selectedColumns <- c("clsPP", "Speed_u", "Speed_std", "Acc_u", "Acc_std")
   } else {
     print("No data selection applied. Please select a value for param `useData`.")
@@ -122,59 +130,14 @@ trainAndTestModel <- function(p, idx = 1, useData = "All", useCluster = F) {
   nHigh <- nrow(pSelected[pSelected$clsPP == "High", ])
   nLow <- nrow(pSelected[pSelected$clsPP == "Low", ])
 
-  # print(paste("High =", nHigh))
-  # print(paste("Low =", nLow))
+  if(DEBUG_MODE) {
+    print(paste("High =", nHigh))
+    print(paste("Low =", nLow))
+  }
 
   # Split dataset
   set.seed(43)
-  # smp_size <- floor(0.8 * nrow(pSelected))
-  n_folds <- 10
-
-  folds <- createFolds(factor(pSelected$clsPP), k = n_folds, list = FALSE)
-  # folds <- cut(seq(1,nrow(pSelected)), breaks=n_folds,labels=FALSE)
-  pSelected$fold <- folds
-
-  kf_acc <- double(n_folds)
-  kf_prec <- double(n_folds)
-  kf_recall <- double(n_folds)
-  kf_f1 <- double(n_folds)
-  kf_npv <- double(n_folds)
-
-  for (i in 1:n_folds) {
-    # train_ind <- sample(seq_len(nrow(pSelected)), size = smp_size)
-    # train <- pSelected[train_ind, ]
-    # test <- pSelected[-train_ind, ]
-
-    # test_ind <- which(folds==i, arr.ind=T)
-    train <- pSelected[pSelected$fold != i, ] %>% select(-fold)
-    test <- pSelected[pSelected$fold == i, ] %>% select(-fold)
-
-    # print(paste("Train =", nrow(train), "Pos =", nrow(train[train$clsPP == "High",]), "Neg =", nrow(train[train$clsPP == "Low",])))
-    # print(paste("Test =", nrow(test), "Pos =", nrow(test[test$clsPP == "High",]), "Neg =", nrow(test[test$clsPP == "Low",])))
-
-    # Model Train
-    model <- randomForest(clsPP ~ ., data = train, importance = TRUE, ntree = 10)
-    # print(model)
-
-    # Test
-    testX <- select(test, -clsPP)
-    predY <- predict(model, testX)
-    testY <- test$clsPP
-
-    # print(levels(predY))
-    # print(levels(testY))
-
-    # Evaluate
-    # print(table(predY, testY))
-
-    kf_acc[i] <- mean(predY == testY)
-    kf_recall[i] <- sensitivity(predY, testY)
-    kf_prec[i] <- posPredValue(predY, testY, positive = "High")
-    kf_f1[i] <- (2 * kf_recall[i] * kf_prec[i]) / (kf_recall[i] + kf_prec[i])
-    kf_npv[i] <- negPredValue(predY, testY, positive = "High")
-
-    # print(paste("Perf:", kf_acc[i], kf_recall[i], kf_prec[i], kf_f1[i], kf_npv[i]))
-  }
+  nFolds <- 10
 
   # XGB
   param <- list(
@@ -187,7 +150,7 @@ trainAndTestModel <- function(p, idx = 1, useData = "All", useCluster = F) {
     min_child_weight = 3,
     subsample = 1,
     colsample_bytree = 0.5,
-    stratified = F
+    stratified = T
   )
   pSelected <- pSelected %>% mutate(clsPP = ifelse(clsPP == "High", 1, 0))
 
@@ -201,20 +164,27 @@ trainAndTestModel <- function(p, idx = 1, useData = "All", useCluster = F) {
       verbose = F,
       prediction = T,
       maximize = T,
-      nfold = n_folds,
+      nfold = nFolds,
       metrics = "auc",
       early_stopping_rounds = 100,
-      scale_pos_weight = 1
+      scale_pos_weight = 1,
+      stratified = T
     )
     aucs <- c(aucs, as.numeric(xgb_m$evaluation_log[xgb_m$best_iteration, "test_auc_mean"]))
   }
+  
+  # Prediction
+  pSelected$clsPPPred <- round(xgb_m$pred)
 
   # Get average performance
-  acc <- mean(kf_acc)
-  prec <- mean(kf_prec)
-  recall <- mean(kf_recall)
-  f1 <- mean(kf_f1)
-  npv <- mean(kf_npv)
+  performance <- computePerformanceResults(pSelected %>% select(clsPP, clsPPPred))
+  acc <- performance[1]
+  prec <- performance[4]
+  recall <- performance[3]
+  spec <- performance[2]
+  npv <- performance[5]
+  f1 <- (2 * recall * prec) / (recall + prec)
+  
   auc <- mean(aucs)
 
   # Return
@@ -222,6 +192,7 @@ trainAndTestModel <- function(p, idx = 1, useData = "All", useCluster = F) {
     accuracy = acc,
     recall = recall,
     precision = prec,
+    specificity = spec,
     f1 = f1,
     npv = npv,
     auc = auc
@@ -235,6 +206,7 @@ trainAndTestModel <- function(p, idx = 1, useData = "All", useCluster = F) {
     perfDf$Accuracy[idx] <<- acc
     perfDf$Precision[idx] <<- prec
     perfDf$Recall[idx] <<- recall
+    perfDf$Spec[idx] <<- spec
     perfDf$F1[idx] <<- f1
     perfDf$NPV[idx] <<- npv
     perfDf$AUC[idx] <<- auc
@@ -246,19 +218,12 @@ trainAndTestModel <- function(p, idx = 1, useData = "All", useCluster = F) {
     perfDf$Accuracy[idx] <<- acc
     perfDf$Precision[idx] <<- prec
     perfDf$Recall[idx] <<- recall
+    perfDf$Spec[idx] <<- spec
     perfDf$F1[idx] <<- f1
     perfDf$NPV[idx] <<- npv
     perfDf$AUC[idx] <<- auc
   }
-
-  # print(rtn)
-  # testDf <- data.frame(obs=testY, pred=predY)
-  # print(twoClassSummary(testDf, lev=levels(testDf$obs)))
-  # print(prSummary(testDf, lev=levels(testDf$obs)))
 }
-
-# Test for each subject
-# trainAndTestModel("08", idx=2)
 
 ################### NOTES ################
 # - Random Forest model to predict class of PP (High, Low)
@@ -275,9 +240,9 @@ for (p in persons) {
 
 # Train model for all subjects
 trainAndTestModel(NA, idx = 0, useData = "All")
-if (ML_USE_CLUSTER) {
-  trainAndTestModel(NA, idx = 0, useData = "All", useCluster = T)
-}
+# if (ML_USE_CLUSTER) {
+#   trainAndTestModel(NA, idx = 0, useData = "All", useCluster = T)
+# }
 head(perfDf, n = length(persons))
 
 # Export

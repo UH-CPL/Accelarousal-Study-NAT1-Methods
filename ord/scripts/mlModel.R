@@ -258,4 +258,4 @@ exportFormatTable(ftable_perf, fname_perf)
 ftable_perf
 
 # Write perf to csv file
-write.csv(perfDf, str_interp("./outputs/mlperf/perf_Prev_${tPre}s_Next_${tNext}s.jpg", list(tPre = TIME_PREV_SECONDS, tNext = TIME_NEXT_SECONDS)))
+write.csv(perfDf, str_interp("./outputs/mlperf/perf_Prev_${tPre}s_Next_${tNext}s.csv", list(tPre = TIME_PREV_SECONDS, tNext = TIME_NEXT_SECONDS)))

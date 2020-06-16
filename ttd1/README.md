@@ -37,9 +37,9 @@ Run these following scripts sequentially.
 ### 1. Process and disjoin data of drives
 Run `preprocess/preprocessDrives.R`.
 ### 2. Merge data
-- Distance-wise preprocessing (Default)
+- Distance-wise preprocessing (Default)  
 Run `preprocess/preprocessDistanceWise.R`. 
-- Time-wise preprocessing (Only for reference)
+- Time-wise preprocessing (Only for reference)  
 Run `preprocess/preprocessTimeWise.R`.
 
 ## Main Script Set

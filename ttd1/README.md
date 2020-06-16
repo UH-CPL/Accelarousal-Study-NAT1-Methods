@@ -35,7 +35,13 @@ Follow instruction at https://github.com/plotly/orca for installation.
 ## Preprocessing Script Set
 Run these following scripts sequentially.
 ### 1. Process and disjoin data of drives
-Run `preprocess/preprocessDrives.R`.
+Run `preprocess/preprocessDrives.R`.  
+
+This script helps to:  
+- Remove noise of arousal signal.
+- Down sample data for each second. 
+- Apply data Quality Control in need.
+
 ### 2. Merge data
 - Distance-wise preprocessing (Default)  
 Run `preprocess/preprocessDistanceWise.R`. 

@@ -3,7 +3,8 @@ Predict types of drivers based on data from 2 studies: On-road Driving Study (OR
 
 ## Getting Started
 ### Prerequisites
-- R and RStudio
+- R (3.6.1)
+- RStudio (1.2.5019)
 - Required packages
 
 ### Installing R Packages

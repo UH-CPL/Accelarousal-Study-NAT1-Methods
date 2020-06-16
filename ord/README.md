@@ -2,7 +2,8 @@
 
 ## Getting Started
 ### Prerequisites
-- R and RStudio
+- R (3.6.1)
+- RStudio (1.2.5019)
 - Required packages
 
 ### Installing R Packages
@@ -42,7 +43,7 @@ PLOTLY_API_KEY <- "<Your Plotly API Key>"
 - Run `scripts/linearModel.R`
 ### 4. ML Model
 - Run `scripts/mlModel.R`
-- There are 4 possible XGBoost models that run on different set of variables:
+- There are 4 possible XGBoost models that run on different sets of variables:
     - `All`: Use all variables generated from Speed, Acceleration, Braking, and Steering.
     - `SpeedOnly`: Use only variables generated from Speed.
     - `AccOnly`: Use only variables generated from Acceleration.

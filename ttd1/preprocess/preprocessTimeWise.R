@@ -1,6 +1,6 @@
 ###################### IMPORT COMMON LIBRARIES/ FUNCTIONS ##############
 source("./settings/settings.R")
-source("./scripts/commonFunctions.R")
+source("./preprocess/commonFunctions.R")
 DEBUG_MODE <- F
 
 ###################### WORKING DIRECTORY ###############################

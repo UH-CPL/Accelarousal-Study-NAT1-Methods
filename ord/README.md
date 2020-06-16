@@ -34,6 +34,10 @@ PLOTLY_USERNAME <- "<Your Plotly Username>"
 PLOTLY_API_KEY <- "<Your Plotly API Key>"
 ```
 
+### Orca
+The Plotly lib needs `orca` as an static image exporting backend. 
+Follow instruction at https://github.com/plotly/orca for installation.
+
 ## Script set
 ### 1. Correllation Analysis
 - Run `scripts/correlation.R`

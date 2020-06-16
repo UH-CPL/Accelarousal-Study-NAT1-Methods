@@ -28,17 +28,22 @@ PLOTLY_USERNAME <- "<Your Plotly Username>"
 PLOTLY_API_KEY <- "<Your Plotly API Key>"
 ```
 
+### Orca
+The Plotly lib needs `orca` as an static image exporting backend. 
+Follow instruction at https://github.com/plotly/orca for installation.
+
 ## Preprocessing Script Set
-Run following scripts sequentially.
+Run these following scripts sequentially.
 ### 1. Process and disjoin data of drives
 Run `preprocess/preprocessDrives.R`.
 ### 2. Merge data
-- Time-wise preprocessing
+- Distance-wise preprocessing (Default)
+Run `preprocess/preprocessDistanceWise.R`. 
+- Time-wise preprocessing (Only for reference)
 Run `preprocess/preprocessTimeWise.R`.
-- Distance-wise preprocessing
-Run `preprocess/preprocessDistanceWise.R`.
 
 ## Main Script Set
+Run these following scripts sequentially.
 ### 1. Drive 1 (No stressor) Analysis
 Run the notebook `notebooks/analysisDrive1_Distance.Rmd`.
 ### 2. Drive 2 (Cognitive stressor) Analysis

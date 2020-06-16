@@ -4,53 +4,16 @@ output: html_notebook
 ---
 
 ```{r}
-if(!require("plotly")) {install.packages("plotly")}
-
-# install.packages("latex2exp")
-# install.packages("BiocManager") 
-# install.packages("corrplot")
-# BiocManager::install("EBImage")
-
-if(!require("lme4")){install.packages("lme4")}
-if(!require("lmerTest")){install.packages("lmerTest")}
-if(!require("nlme")){install.packages("nlme")}
-if(!require("formattable")){install.packages("formattable")}
-if(!require("xgboost")){install.packages("xgboost")}
-if(!require("processx")) {install.packages("processx")}
-
-library(plotly)
-library(lme4)
-library(lmerTest)
-library(nlme)
-library(formattable)
-library(xgboost)
-
-### Load libraries
-library(EBImage)
-library(ggplot2)
-library(stringr)
-library(gridExtra)
-library(latex2exp)
-packageVersion('plotly')
-Sys.setenv("plotly_username"="thuynh32")
-Sys.setenv("plotly_api_key"="xcSv1yzujDc1IGEwQlr2")
-
+source('../settings/settings.R')
+source('commonFunctions.R')
 ```
 
 ```{r}
-colorBlue = "#007fff"
-colorRed = "#ff7f7f"
-colorGray = "#cccccc"
-colorGreen = "#11ff00"
+persons <- SELECTED_SUBJECTS
 
-all_Drive1 <- read.csv('../../../data/TT1/preprocessed/All/TT1_Drive_1_30m_30m.csv')
+all_Drive1 <- read.csv('..//data/processed/distancewise/TT1_Drive_1_30m_30m.csv')
 all_Drive1$Subject <- as.factor(all_Drive1$Subject)
 all_Drive1$logPerspiration <- log(all_Drive1$Perspiration)
-
-
-persons         = c("01",  "02", "03", "04", "05",  "06",  "07", 
-                    "09",  "12", "13", "15", "16",  "17",  "18", 
-                    "22",  "24", "29", "30", "31",  "32",  "41")
 ```
 
 
@@ -131,7 +94,7 @@ y2 <- list(
   side = "right",
   title = "Log Perspiration",
   showgrid = FALSE,
-  range=c(min(all_Drive1$ppLogNormalized), max(all_Drive1$ppLogNormalized))
+  range=c(-max(all_Drive1$ppLogNormalized), max(all_Drive1$ppLogNormalized))
 )
 
 for (p in persons) {
@@ -170,7 +133,7 @@ for (p in persons) {
       yaxis=y1, 
       yaxis2=y2, 
       margin = list(l = 50, r = 50, b = 50, t = 50, pad = 4),
-      legend = list(x = 0.5, xanchor = "center", y = 0.2, bgcolor = "rgba(0,0,0,0)", title="Metric", orientation = "h"),
+      legend = list(x = 0.5, xanchor = "center", y = -0.4, bgcolor = "rgba(0,0,0,0)", title="Metric", orientation = "h"),
       autosize = F
     )
   
@@ -183,9 +146,7 @@ htmltools::tagList(plt_AllAcc)
 
 
 ```{r}
-library(dendextend)
-
-NUMBER_OF_CLUSTERS = 4
+NUMBER_OF_CLUSTERS = 3
 
 color_darkpink = "#e75480"
 CLUSTER_BRANCH_COLORS <- c("blue", "darkred", color_darkpink, "black")[1:NUMBER_OF_CLUSTERS]
@@ -218,7 +179,7 @@ hc <- hresults %>%
 plot(hc)
 legend("topright", 
      title="Drive=Cognitive \nHierachical Clustering",
-     legend = c("Exceptional Increase of PP" , "Slightly Increase of PP" , "No-change or Decrease of PP"), 
+     legend = c("Group 1", "Group 2", "Group 3"), 
      col = c("darkred", "pink" , "blue"),
      pch = c(20,20,20), bty = "n",  pt.cex = 1.5, cex = 0.8 , 
      text.col = "black", horiz = FALSE, inset = c(0.4, 0.1))
@@ -227,8 +188,8 @@ legend("topright",
 
 
 ```{r}
-# Store clustering data
-fPath <- str_interp("../../../data/TT1/preprocessed/Analysis/TT1_Drive_1_PP.csv")
+# Store analysis data
+fPath <- str_interp("../data/processed/analysis/TT1_Drive_1_PP.csv")
 dfx <- dfPP
 dfx <- cbind(persons, dfx)
 names(dfx) <- c("Subject", names(dfPP))

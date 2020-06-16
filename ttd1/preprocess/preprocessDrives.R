@@ -3,7 +3,7 @@ library(tidyverse)
 
 source("settings/settings.R")
 source("utils/downsample.R")
-source("utils/denoise.R")
+source("utils/noiseRemoval.R")
 
 persons <- SELECTED_SUBJECTS
 
@@ -25,20 +25,33 @@ for (p in persons) {
       "Acceleration", "Braking", "Steering",
       "Phase", "Activity", "Failure", "Distance"
     ))
+    
+    # Remove NA and empty values
+    df_drive <- df_drive[complete.cases(df_drive), ]
+    df_drive <- df_drive[df_drive$Perspiration != "",]
+    df_drive$Perspiration <- as.numeric(df_drive$Perspiration)
+    
+    # Signal Smoothing
+    df_drive$PerspirationNR <- remove_noise(
+      df_drive$Perspiration,
+      removeImpluse = T,
+      lowpassDecayFreq = 1 / 1, 
+      samplePerSecond = 7
+    )
+    df_drive$Perspiration <- df_drive$PerspirationNR
 
+    # Down sampling
     df_downresample <- downsample_using_mean(df_drive, c(
       "Perspiration", "Speed",
       "Acceleration", "Braking", "Steering",
       "Phase", "Activity", "Failure", "Distance"
     ))
 
-    if (d == 4) {
-      df_out <- df_downresample
-    } else {
-      df_out <- df_downresample
-      # df_out <- df_downresample[df_downresample$Phase != 0 & df_downresample$Activity != 0,]
-    }
+    # Data of Speed/ Acc/ Braking/ Steering has been cleaned in other project
+    # Therefore, no QA is needed here
 
+    # Store signals
+    df_out <- df_downresample
     subDir <- str_interp("T0${person}", list(person = p))
     filePath <- str_interp("./data/processed/drives/T0${person}/T0${person}_Drive_${drive}.csv", list(person = p, drive = d))
     dir.create(file.path(dataOutDir, subDir), showWarnings = FALSE)

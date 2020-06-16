@@ -4,49 +4,19 @@ output: html_notebook
 ---
 
 ```{r}
-if(!require("plotly")) {install.packages("plotly")}
-
-# install.packages("latex2exp")
-# install.packages("BiocManager") 
-# install.packages("corrplot")
-# BiocManager::install("EBImage")
-
-if(!require("lme4")){install.packages("lme4")}
-if(!require("lmerTest")){install.packages("lmerTest")}
-if(!require("nlme")){install.packages("nlme")}
-if(!require("formattable")){install.packages("formattable")}
-if(!require("xgboost")){install.packages("xgboost")}
-if(!require("processx")) {install.packages("processx")}
-
-if(!require("mefa")){install.packages("mefa")}
-
-library(plotly)
-library(lme4)
-library(lmerTest)
-library(nlme)
-library(formattable)
-library(xgboost)
-
-### Load libraries
-library(EBImage)
-library(ggplot2)
-library(stringr)
-library(gridExtra)
-library(latex2exp)
-packageVersion('plotly')
-Sys.setenv("plotly_username"="thuynh32")
-Sys.setenv("plotly_api_key"="xcSv1yzujDc1IGEwQlr2")
-
+source('../settings/settings.R')
+source('commonFunctions.R')
 ```
 
 ```{r}
-drive1 <- read.csv('../../../data/TT1/preprocessed/Analysis/TT1_Drive_1_PP.csv')
-drive2 <- read.csv('../../../data/TT1/preprocessed/Analysis/TT1_Drive_2_PP.csv')
-drive3 <- read.csv('../../../data/TT1/preprocessed/Analysis/TT1_Drive_3_PP.csv')
-drive4 <- read.csv('../../../data/TT1/preprocessed/Analysis/TT1_Drive_4_PP.csv', stringsAsFactors = T)
+drive1 <- read.csv('../data/processed/analysis/TT1_Drive_1_PP.csv')
+drive2 <- read.csv('../data/processed/Analysis/TT1_Drive_2_PP.csv')
+drive3 <- read.csv('../data/processed/Analysis/TT1_Drive_3_PP.csv')
+drive4 <- read.csv('../data/processed/Analysis/TT1_Drive_4_PP.csv', stringsAsFactors = T)
 ```
 
 ```{r}
+set.seed(43)
 combinedDf <- cbind(drive4, 
                     drive1$MeanPP_Seg0, 
                     drive2$MeanPP_SegMax, drive3$MeanPP_SegMax, 
@@ -140,10 +110,8 @@ htmltools::tagList(fig_Motoric)
 
 ```{r}
 library(nlme)
-
 combinedDf$Subject = as.factor(combinedDf$Subject)
 combinedDf$Activity = as.factor(combinedDf$Activity)
-
 combinedDf$PP_Dev_Group = ifelse(combinedDf$PP_Dev > THRESHOLD_MILD, 1, 0)
 ```
 
@@ -163,37 +131,6 @@ summary(model)
 plot(model)
 ```
 
-```{r}
-model = lme(PP_Dev ~ 
-              abs(PP_Dev_2_Turning)
-              + factor(Activity), 
-            random=~1|Subject,
-            data=combinedDf,
-            method="REML")
-
-# anova(model)
-summary(model)
-plot(model)
-```
-
-```{r}
-model = lme(PP_Dev ~ 
-              PP_Dev_2_Straight + 
-              PP_Dev_3_Straight + 
-              PP_Dev_1_Turning + 
-              PP_Dev_2_Turning + 
-              PP_Dev_3_Turning + 
-              Std_PP_2 + 
-              Std_PP_3 +
-              factor(Activity), 
-            random=~1|Subject,
-            data=combinedDf,
-            method="REML")
-
-# anova(model)
-summary(model)
-plot(model)
-```
 
 ```{r}
 combinedDf$PP_Dev <- NULL
@@ -214,9 +151,6 @@ combinedDf$PP_Dev_Group <- NULL
 ```
 
 ```{r}
-# s=55, f=4
-
-set.seed(5151) 
 n_folds <- 3
 params <- param <- list(objective       = "binary:logistic", 
                booster          = "gbtree",
@@ -230,23 +164,7 @@ params <- param <- list(objective       = "binary:logistic",
                subsample        = 1,
                colsample_bytree = 0.5)
            
-# xgb_m <- xgb.cv(   params               = param,
-#                   data = as.matrix(combinedDf %>% select(-Class)) ,
-#                   label =  combinedDf$Class,
-#                   nrounds             = 100,
-#                   verbose             = F,
-#                   prediction          = T,
-#                   maximize            = T,
-#                   nfold = n_folds,
-#                   metrics  = "auc",
-#                   early_stopping_rounds = 100,
-#                   stratified       = F,
-#                   scale_pos_weight = 0.5)
-# 
-# # xgb_m$evaluation_log[xgb_m$best_iteration,"test_auc_mean"]
-# xgb_m$evaluation_log[xgb_m$best_iteration,]
-
-# Error         
+# XGBoost Model         
 xgb_m <- xgb.cv(   params               = param,
                   data = as.matrix(combinedDf %>% select(-Class)) ,
                   label =  combinedDf$Class,

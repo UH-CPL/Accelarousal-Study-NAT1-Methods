@@ -67,6 +67,11 @@ print(summary(linearModel_AllSubjects))
 print("ANOVA:")
 print(anova(linearModel_AllSubjects))
 
+# Log
+sink(str_interp("./outputs/linearmodel/lm_Prev_${tPre}s_Next_${tNext}s.txt", list(tPre = TIME_PREV_SECONDS, tNext = TIME_NEXT_SECONDS)))
+print(summary(linearModel_AllSubjects))
+sink()
+
 ### 2. Linear model for each subject
 for (p in persons) {
   plotLinearModel(p, all, usePhysiological = F)

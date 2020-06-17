@@ -141,6 +141,20 @@ processTemporalData <- function(all, persons, timePrevSeconds = 30, timeNextSeco
   return(all)
 }
 
+# Get sample data
+# @param p: Subject ID
+# @param all: Data frame of all subjects
+# @returns: Data frame of a subject
+getSampleSegmentedData <- function(p, all, window=5) {
+  if (is.na(p)) {
+    pData <- all[complete.cases(all), ]
+    return(pData[seq(1, nrow(pData), window), ])
+  } else {
+    pData <- all[all$Subject == p, ]
+    return(pData[seq(1, nrow(pData), window), ])
+  }
+}
+
 ################ 3. Correllation #########################
 # Compute and draw correlation matrix of a subject
 # @param p: subject ID
@@ -149,8 +163,10 @@ processTemporalData <- function(all, persons, timePrevSeconds = 30, timeNextSeco
 # @param rowNo: subject index
 # @param skipPlot: disable plotting function
 # @returns: void
-computeAndPlotCorrelation <- function(p, all, behavioralMatrix, rowNo = 1, skipPlot = F) {
-  pData <- all[all$Subject == p, ]
+computeAndPlotCorrelation <- function(p, all, behavioralMatrix, window=5, rowNo = 1, skipPlot = F) {
+  # Sample data
+  pData <- getSampleSegmentedData(p, all, window)
+  
   # Correlation
   pCorrData <- pData %>% select(
     ppNext, Speed, Accelerator, Brake, HR, BR, Steering,
@@ -168,14 +184,14 @@ computeAndPlotCorrelation <- function(p, all, behavioralMatrix, rowNo = 1, skipP
   rowCorPP <- corMatrix[nrow(corMatrix), ]
   behavioralMatrix[rowNo, ] <<- c(
     paste0("Subject #", p),
-    round(rowCorPP[["Speed_u"]], digits = 5),
-    round(rowCorPP[["Speed_std"]], digits = 5),
-    round(rowCorPP[["Acc_u"]], digits = 5),
-    round(rowCorPP[["Acc_std"]], digits = 5),
-    round(rowCorPP[["Brake_u"]], digits = 5),
-    round(rowCorPP[["Brake_std"]], digits = 5),
-    round(rowCorPP[["Steering_u"]], digits = 5),
-    round(rowCorPP[["Steering_std"]], digits = 5)
+    round(rowCorPP[["Speed_u"]], digits = 3),
+    round(rowCorPP[["Speed_std"]], digits = 3),
+    round(rowCorPP[["Acc_u"]], digits = 3),
+    round(rowCorPP[["Acc_std"]], digits = 3),
+    round(rowCorPP[["Brake_u"]], digits = 3),
+    round(rowCorPP[["Brake_std"]], digits = 3),
+    round(rowCorPP[["Steering_u"]], digits = 3),
+    round(rowCorPP[["Steering_std"]], digits = 3)
   )
 
   # Draw
@@ -188,8 +204,13 @@ computeAndPlotCorrelation <- function(p, all, behavioralMatrix, rowNo = 1, skipP
 # @param all: Data frame of all subjects
 # @param skipPlot: disable plotting function
 # @returns: void
-computeAndPlotCorrelationOfAllSubjects <- function(all, skipPlot = F) {
+computeAndPlotCorrelationOfAllSubjects <- function(all, window=5, skipPlot = F) {
+  # Select data
   pCorrData <- all %>% select(ppNext, Speed, Accelerator, Brake, HR, BR, Steering, Speed_u, Speed_std, Acc_u, Acc_std, Brake_u, Brake_std, Steering_u, Steering_std)
+  
+  # Sample data
+  pCorrData <-getSampleSegmentedData(NA, pCorrData, window)
+  
   pCorrData$PP <- pCorrData$ppNext
   pCorrData$ppNext <- NULL
 
@@ -219,9 +240,8 @@ getClusterName <- function(s, clusters) {
 # @param all: data frame of all subject
 # @param usePhysiological: whether using other physiological information such as heart rate, breath rate
 # @returns: model
-plotLinearModel <- function(p, all, usePhysiological = F) {
-  pData <- all[all$Subject == p, ]
-  pData <- pData[!is.na(pData$pp), ]
+plotLinearModel <- function(p, all, window=5, usePhysiological = F) {
+  pData <- getSampleSegmentedData(p, all, window)
   if (usePhysiological) {
     linearModel <- lm(ppLogNormalized ~ Speed_u + Speed_std + Acc_u + Acc_std + Brake_u + Brake_std + Steering_u + Steering_std + HR + BR, data = pData)
     # Diagnostic
@@ -240,9 +260,9 @@ plotLinearModel <- function(p, all, usePhysiological = F) {
 # @param usePhysiological: whether using other physiological information such as heart rate, breath rate
 # @param removeIncompletedSubject: remove specific subjects who having insufficient data
 # @returns: model
-plotLinearModelForAllSubjects <- function(all, usePhysiological = F, removeIncompletedSubject = T) {
+plotLinearModelForAllSubjects <- function(all, window=5, usePhysiological = F, removeIncompletedSubject = T) {
   linearModelAll <- NULL
-  pData <- all[!is.na(all$pp), ]
+  pData <- getSampleSegmentedData(NA, all, window)
   if (removeIncompletedSubject) {
     pData <- pData[!(pData$Subject %in% c("11")), ]
   }
@@ -266,7 +286,6 @@ computePerformanceResults <- function(sdat){
   npv =    conf_mat[1,1]/sum(conf_mat[1,])
   return(c(acc,specif,sensiv,preci,npv))
 }
-
 
 ################## 7. Visualization ####################
 # Store a table to an image

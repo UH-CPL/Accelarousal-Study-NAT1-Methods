@@ -1,0 +1,41 @@
+Linear mixed model fit by REML. t-tests use Satterthwaite's method ['lmerModLmerTest']
+Formula: ppLogNormalized ~ (1 | Subject) + Speed_u + Speed_std + Acc_u +  
+    Acc_std + Brake_u + Brake_std + Steering_u + Steering_std
+   Data: pData
+
+REML criterion at convergence: -1411
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-8.4529 -0.4245  0.0468  0.5293  4.4359 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ Subject  (Intercept) 0.02550  0.1597  
+ Residual             0.02573  0.1604  
+Number of obs: 1895, groups:  Subject, 8
+
+Fixed effects:
+               Estimate Std. Error         df t value Pr(>|t|)    
+(Intercept)   2.191e-01  6.214e-02  1.019e+01   3.525  0.00533 ** 
+Speed_u       2.932e-04  1.591e-04  1.879e+03   1.843  0.06548 .  
+Speed_std     5.000e-03  1.584e-03  1.879e+03   3.157  0.00162 ** 
+Acc_u        -2.075e-04  7.227e-04  1.880e+03  -0.287  0.77401    
+Acc_std       8.875e-04  1.544e-03  1.880e+03   0.575  0.56553    
+Brake_u      -2.022e-03  4.894e-04  1.881e+03  -4.132 3.76e-05 ***
+Brake_std     2.260e-03  8.983e-04  1.879e+03   2.516  0.01197 *  
+Steering_u    3.253e-04  1.376e-04  1.880e+03   2.364  0.01816 *  
+Steering_std -1.226e-04  2.553e-04  1.879e+03  -0.480  0.63110    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr) Speed_ Spd_st Acc_u  Acc_st Brake_ Brk_st Sterng_
+Speed_u     -0.168                                                  
+Speed_std    0.131 -0.060                                           
+Acc_u       -0.372  0.047 -0.435                                    
+Acc_std     -0.059  0.032 -0.042 -0.041                             
+Brake_u     -0.320  0.486 -0.429  0.605  0.348                      
+Brake_std   -0.090 -0.068 -0.142  0.270 -0.381 -0.150               
+Steering_u   0.051 -0.064 -0.056 -0.039 -0.086 -0.052  0.025        
+Steerng_std -0.009  0.192 -0.135 -0.056 -0.014  0.117 -0.158  0.241 

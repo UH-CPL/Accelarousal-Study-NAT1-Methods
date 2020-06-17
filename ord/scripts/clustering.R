@@ -34,11 +34,11 @@ behavioralColumns <- BEHAVIORAL_COLUMNS
 behavioralMatrix <- matrix(nrow = length(persons), ncol = length(behavioralColumns))
 
 ###################### 1. Correlation of all Subjects ###################
-computeAndPlotCorrelationOfAllSubjects(all, skipPlot = T)
+computeAndPlotCorrelationOfAllSubjects(all, window=TIME_PREV_SECONDS, skipPlot = T)
 
 ###################### 2. Correlation of each Subject ####################
 for (p in persons) {
-  computeAndPlotCorrelation(p, all, behavioralMatrix, rowNo = match(p, persons), skipPlot = T)
+  computeAndPlotCorrelation(p, all, behavioralMatrix, window=TIME_PREV_SECONDS, rowNo = match(p, persons), skipPlot = T)
 }
 
 ######################### CLUSTERING ##############################
@@ -84,17 +84,18 @@ hc <- hresults %>%
   set("branches_k_color", value = CLUSTER_BRANCH_COLORS, k = NUMBER_OF_CLUSTERS)
 
 # Store to a file
+plotTitle <- paste0("Hierachical Clustering (Previous ", TIME_PREV_SECONDS, "s, Next ", TIME_NEXT_SECONDS, "s)")
 fname <- str_interp("./plots/clustering/clustering_Prev_${tPre}s_Next_${tNext}s.jpg", list(tPre = TIME_PREV_SECONDS, tNext = TIME_NEXT_SECONDS))
-jpeg(fname)
-plot(hc, main = paste0("Hierachical Clustering (Previous ", TIME_PREV_SECONDS, "s, Next ", TIME_NEXT_SECONDS, "s)"), ylab = "Distance Between Clusters", horiz = F, xlab = "Subjects", ylim = c(0, 1.4))
+jpeg(fname, width=560, height=720, res=144)
+plot(hc, main = "", ylab = "Distance Between Clusters", horiz = F, xlab = "Subject", ylim = c(0, 1.4), xaxs="i", yaxs="i")
 abline(h = CLUSTER_THRESHOLD, lty = 2, )
-text(4, CLUSTER_THRESHOLD + 0.05, paste0("Threshold = ", CLUSTER_THRESHOLD), col = "orange")
+text(4, CLUSTER_THRESHOLD + 0.075, paste0("Threshold = ", CLUSTER_THRESHOLD), col = "black")
 dev.off()
 
 # Print-out
-plot(hc, main = paste0("Hierachical Clustering (Previous ", TIME_PREV_SECONDS, "s, Next ", TIME_NEXT_SECONDS, "s)"), ylab = "Distance Between Clusters", horiz = F, xlab = "Subjects", ylim = c(0, 1.4))
+plot(hc, main = plotTitle, ylab = "Distance Between Clusters", horiz = F, xlab = "Subject", ylim = c(0, 1.4))
 abline(h = CLUSTER_THRESHOLD, lty = 2, )
-text(4, CLUSTER_THRESHOLD + 0.05, paste0("Threshold = ", CLUSTER_THRESHOLD), col = "orange")
+text(4, CLUSTER_THRESHOLD + 0.075, paste0("Threshold = ", CLUSTER_THRESHOLD), col = "orange")
 
 # Grouping
 behavioralDf <- behavioralDf %>% mutate(Group = getClusterName(Subject, clusters))
@@ -133,3 +134,9 @@ ftable
 # Export
 fname <- str_interp("./plots/correllation/corrTable_Prev_${tPre}s_Next_${tNext}s.jpg", list(tPre = TIME_PREV_SECONDS, tNext = TIME_NEXT_SECONDS))
 exportFormatTable(ftable, fname)
+
+# Export to CSV
+csvFname <- str_interp("./outputs/correllation/corrTable_Prev_${tPre}s_Next_${tNext}s.csv", list(tPre = TIME_PREV_SECONDS, tNext = TIME_NEXT_SECONDS))
+write.csv(behavioralDf, csvFname)
+
+

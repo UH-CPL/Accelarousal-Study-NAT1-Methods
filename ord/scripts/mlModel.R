@@ -73,12 +73,11 @@ if (ML_USE_CLUSTER) {
 }
 
 # Train
-trainAndTestModel <- function(p, idx = 1, useData = "All", useCluster = F) {
+trainAndTestModel <- function(p, all, idx = 1, useData = "All", useCluster = F) {
   if (!is.na(p) && idx > 0) {
-    pData <- all[all$Subject == p, ]
+    pData <- getSampleSegmentedData(p, all, window = TIME_PREV_SECONDS)
   } else {
-    pData <- all
-    pData <- pData[complete.cases(pData), ]
+    pData <- getSampleSegmentedData(NA, all, window = TIME_PREV_SECONDS)
   }
 
   pData <- pData[!is.na(pData$ppNext), ]
@@ -88,7 +87,7 @@ trainAndTestModel <- function(p, idx = 1, useData = "All", useCluster = F) {
   
   # Select a threshold
   threshold_PP_Log_P <- NA
-  if (!is.na(p) && p == "01") { 
+  if (!is.na(p) && (p == "01" || p == "11")) { 
     # As #01 has imbalanced distribution of PP, we manually select a threshold equal to the baseline PP
     threshold_PP_Log_P <- mean(allBaseline[allBaseline$Subject==p,]$pp_nr2)
   } else {
@@ -149,10 +148,14 @@ trainAndTestModel <- function(p, idx = 1, useData = "All", useCluster = F) {
     gamma = 0.8,
     min_child_weight = 3,
     subsample = 1,
-    colsample_bytree = 0.5,
+    colsample_bytree = 1,
     stratified = T
   )
   pSelected <- pSelected %>% mutate(clsPP = ifelse(clsPP == "High", 1, 0))
+  posScale <- nLow/nHigh
+  if (posScale < 1) {
+    posScale = nHigh/nLow
+  }
 
   aucs <- c()
   if (!useCluster) {
@@ -167,7 +170,7 @@ trainAndTestModel <- function(p, idx = 1, useData = "All", useCluster = F) {
       nfold = nFolds,
       metrics = "auc",
       early_stopping_rounds = 100,
-      scale_pos_weight = 1,
+      scale_pos_weight = posScale,
       stratified = T
     )
     aucs <- c(aucs, as.numeric(xgb_m$evaluation_log[xgb_m$best_iteration, "test_auc_mean"]))
@@ -235,13 +238,13 @@ trainAndTestModel <- function(p, idx = 1, useData = "All", useCluster = F) {
 
 ### 1. ML Model 1: Use all driving data (includes Speed, Accelertor, Brake, Steering)
 for (p in persons) {
-  trainAndTestModel(p, idx = match(p, persons), useData = "All")
+  trainAndTestModel(p, all, idx = match(p, persons), useData = "All")
 }
 
-# Train model for all subjects
-trainAndTestModel(NA, idx = 0, useData = "All")
+# Train model for between-subject
+# trainAndTestModel(NA, all, idx = 0, useData = "All")
 # if (ML_USE_CLUSTER) {
-#   trainAndTestModel(NA, idx = 0, useData = "All", useCluster = T)
+#   trainAndTestModel(NA, all, idx = 0, useData = "All", useCluster = T)
 # }
 head(perfDf, n = length(persons))
 

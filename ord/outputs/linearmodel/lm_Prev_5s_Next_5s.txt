@@ -1,6 +1,5 @@
 Linear mixed model fit by REML. t-tests use Satterthwaite's method ['lmerModLmerTest']
-Formula: ppLogNormalized ~ (1 | Subject) + Speed_u + Speed_std + Acc_u +  
-    Acc_std + Brake_u + Brake_std + Steering_u + Steering_std
+Formula: ppLogNormalized ~ (1 | Subject) + Speed_u + Speed_std + Acc_u +      Acc_std + Brake_u + Brake_std + Steering_u + Steering_std
    Data: pData
 
 REML criterion at convergence: -1411

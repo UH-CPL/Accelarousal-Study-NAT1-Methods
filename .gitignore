@@ -5,3 +5,6 @@
 */.Ruserdata
 .DS_Store
 .Rproj.user
+.vscode/*
+ttd1/data/processed/analysis.bk/*
+*/.log

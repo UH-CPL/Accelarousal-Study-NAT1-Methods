@@ -154,7 +154,7 @@ names(dfPP) <- c("MeanPP", "StdPP", "MeanPP_Seg0", "MeanPP_Seg1", "MeanPP_Seg2",
 behavioralMatrixClustering <- as.matrix(dfPP)
 
 distMatrix <- dist(behavioralMatrixClustering)
-hresults <- distMatrix %>% hclust
+hresults <- distMatrix %>% hclust(method="average")
 
 hc <- hresults %>% 
       as.dendrogram %>%
@@ -171,6 +171,50 @@ legend("topright",
      col = c("darkred", "pink" , "blue"),
      pch = c(20,20,20), bty = "n",  pt.cex = 1.5, cex = 0.8 , 
      text.col = "black", horiz = FALSE, inset = c(0.4, 0.1))
+```
+
+# Clustering with SD of PP
+```{r}
+library(dendextend)
+
+clusteringDf <- dfPP %>% select(StdPP)
+NUMBER_OF_CLUSTERS = 3
+
+color_darkpink = "#e75480"
+CLUSTER_BRANCH_COLORS <- c("darkred", "blue", "red")[1:NUMBER_OF_CLUSTERS]
+CLUSTER_LABEL_COLORS <- c("darkred", "blue", "red")[1:NUMBER_OF_CLUSTERS]
+
+behavioralMatrixClustering <- as.matrix(clusteringDf)
+rownames(behavioralMatrixClustering) <- paste0("#", persons)
+distMatrix <- dist(behavioralMatrixClustering)
+hresults <- distMatrix %>% hclust
+
+hc <- hresults %>% 
+      as.dendrogram %>%
+      set("nodes_cex", NUMBER_OF_CLUSTERS) %>%
+      set("labels_col", value = CLUSTER_LABEL_COLORS, k=NUMBER_OF_CLUSTERS) %>%
+      # set("leaves_pch", 19) %>%
+      # set("leaves_col", value = c("gray"), k=NUMBER_OF_CLUSTERS) %>%    
+      set("branches_k_color", value=CLUSTER_BRANCH_COLORS, k=NUMBER_OF_CLUSTERS)
+
+plot(hc)
+legend("topright", 
+     title="Drive=Motoric \nChange of Arousal",
+     legend = c("Exceptional SD" , "Low SD" , "High SD"), 
+     col = c("darkred", "blue" , "red"),
+     pch = c(20,20,20), bty = "n",  pt.cex = 1.5, cex = 0.8 , 
+     text.col = "black", horiz = FALSE, inset = c(0.0, 0.1))
+```
+
+```{r}
+silhouette_score <- function(k){
+  km <- kmeans(clusteringDf, centers = k, nstart=25)
+  ss <- silhouette(km$cluster, dist(clusteringDf))
+  mean(ss[, 3])
+}
+k <- 2:10
+avg_sil <- sapply(k, silhouette_score)
+plot(k, type='b', avg_sil, xlab='Number of clusters', ylab='Average Silhouette Scores', frame=FALSE)
 ```
 
 ```{r}

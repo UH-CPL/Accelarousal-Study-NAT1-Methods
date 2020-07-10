@@ -9,6 +9,15 @@ BEHAVIORAL_COLUMNS <- c(
   "Subject", "Speed (u)", "Speed (std.)", "Acc (u)", "Acc (std.)",
   "Brake (u)", "Brake (std.)", "Steering (u)", "Steering (std.)"
 )
+CORRELATION_NAMES <- c(TeX("$\\mu_{Speed}$"), TeX("$\\sigma_{Speed}$"),
+                       TeX("$\\mu_{Accel.}$"), TeX("$\\sigma_{Accel.}$"),
+                       TeX("$\\mu_{Brake}$"), TeX("$\\sigma_{Brake}$"),
+                       TeX("$\\mu_{Steering}$"), TeX("$\\sigma_{Steering}$"),
+                       TeX("$\\textbf{_{Arousal}}$"))
+LINEAR_MODEL_VARIABLES_LATEX <- c("$\\mu_{Speed}$", "$\\sigma_{Speed}$",
+                                  "$\\mu_{Accel.}$", "$\\sigma_{Accel.}$",
+                                  "$\\mu_{Brake}$", "$\\sigma_{Brake}$",
+                                  "$\\mu_{Steering}$", "$\\sigma_{Steering}$")
 
 # Time-series Prediction
 GROUP_THRESHOLD <- 0.20
@@ -28,6 +37,10 @@ PLOTLY_API_KEY <- "xcSv1yzujDc1IGEwQlr2"
 
 Sys.setenv("plotly_username" = PLOTLY_USERNAME)
 Sys.setenv("plotly_api_key" = PLOTLY_API_KEY)
+
+# XTable
+options(xtable.floating = FALSE)
+options(xtable.timestamp = "")
 
 # Colors
 colorBlue <- "#007fff"

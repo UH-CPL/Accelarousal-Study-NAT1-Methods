@@ -29,7 +29,7 @@ if (DEBUG_MODE) {
   print(length(all$Time))
 }
 
-###################### CORRELLATION #####################################
+###################### CORRELATION #####################################
 behavioralColumns <- BEHAVIORAL_COLUMNS
 behavioralMatrix <- matrix(nrow = length(persons), ncol = length(behavioralColumns))
 
@@ -50,6 +50,7 @@ for (col in behavioralColumns) {
     behavioralDf[, col] <- as.numeric(as.character(behavioralDf[, col]))
   }
 }
+clusteringDf <- behavioralDf
 # head(behavioralDf)
 
 formattable(
@@ -69,7 +70,7 @@ formattable(
 )
 
 ### Hierachical Clustering & Grouping
-behavioralMatrixClustering <- as.matrix(behavioralDf)
+behavioralMatrixClustering <- as.matrix(behavioralDf %>% select(-Subject))
 rownames(behavioralMatrixClustering) <- paste0("#", persons)
 distMatrix <- dist(behavioralMatrixClustering)
 hresults <- distMatrix %>% hclust()
@@ -132,11 +133,39 @@ ftable <- formattable(
 ftable
 
 # Export
-fname <- str_interp("./plots/correllation/corrTable_Prev_${tPre}s_Next_${tNext}s.jpg", list(tPre = TIME_PREV_SECONDS, tNext = TIME_NEXT_SECONDS))
+fname <- str_interp("./plots/correlation/corrTable_Prev_${tPre}s_Next_${tNext}s.jpg", list(tPre = TIME_PREV_SECONDS, tNext = TIME_NEXT_SECONDS))
 exportFormatTable(ftable, fname)
 
 # Export to CSV
-csvFname <- str_interp("./outputs/correllation/corrTable_Prev_${tPre}s_Next_${tNext}s.csv", list(tPre = TIME_PREV_SECONDS, tNext = TIME_NEXT_SECONDS))
+csvFname <- str_interp("./outputs/correlation/corrTable_Prev_${tPre}s_Next_${tNext}s.csv", list(tPre = TIME_PREV_SECONDS, tNext = TIME_NEXT_SECONDS))
 write.csv(behavioralDf, csvFname)
+
+# Evaluate Clustering method
+k <- 2:7
+clusteringDf$Subject <- NULL
+
+# 1. Silhouette
+silhouette_score <- function(k){
+  km <- kmeans(clusteringDf, centers = k, nstart=25)
+  ss <- silhouette(km$cluster, dist(clusteringDf))
+  mean(ss[, 3])
+}
+avg_sil <- sapply(k, silhouette_score)
+plot(k, type='b', avg_sil, xlab='Number of clusters', ylab='Average Silhouette Scores', frame=FALSE)
+
+
+
+# 2. Elbow
+# Function to compute total within-cluster sum of square 
+library(purrr)
+wss <- function(k) {
+  kmeans(clusteringDf, k, nstart = 10 )$tot.withinss
+}
+wss_values <- map_dbl(k, wss)
+plot(k, wss_values,
+     type="b", pch = 19, frame = FALSE, 
+     xlab="Number of clusters K",
+     ylab="Total within-clusters sum of squares")
+
 
 

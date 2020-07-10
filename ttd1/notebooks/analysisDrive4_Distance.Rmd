@@ -196,10 +196,10 @@ htmltools::tagList(plt_AllAcc)
 ```
 
 ```{r, warning=FALSE}
-for (p in persons) {
-  # Save image
-  orca(plt_AllAcc[[p]], file = paste0("../plots/drive/Drive_4/T0", p, ".png"), scale = 2)
-}
+# for (p in persons) {
+#   # Save image
+#   orca(plt_AllAcc[[p]], file = paste0("../plots/drive/Drive_4/T0", p, ".png"), scale = 2)
+# }
 ```
 
 ```{r}
@@ -295,12 +295,12 @@ library(dendextend)
 NUMBER_OF_CLUSTERS = 3
 
 color_darkpink = "#e75480"
-CLUSTER_BRANCH_COLORS <- c("blue", "darkred", color_darkpink)[1:NUMBER_OF_CLUSTERS]
-CLUSTER_LABEL_COLORS <- c("blue", "darkred", color_darkpink)[1:NUMBER_OF_CLUSTERS]
+CLUSTER_BRANCH_COLORS <- c("blue", "red", color_darkpink)[1:NUMBER_OF_CLUSTERS]
+CLUSTER_LABEL_COLORS <- c("blue", "red", color_darkpink)[1:NUMBER_OF_CLUSTERS]
 
 behavioralMatrixClustering <- as.matrix(clusteringDf)
 rownames(behavioralMatrixClustering) <- paste0(dfActivity$ActivityName, " - #", persons)
-distMatrix <- dist(behavioralMatrixClustering)
+distMatrix <- dist(behavioralMatrixClustering, method="manhattan")
 hresults <- distMatrix %>% hclust
 
 hc <- hresults %>% 
@@ -313,27 +313,56 @@ hc <- hresults %>%
 
 plot(hc)
 legend("topright", 
-     title="Drive=Failure \nHierachical Clustering",
-     legend = c("Exceptional Increase of PP" , "Slightly Increase of PP" , "No-change or Decrease of PP"), 
-     col = c("darkred", "pink" , "blue"),
+     title="Drive=Failure \nChange of Arousal",
+     legend = c("Exceptional Increase" , "Noticable Increase" , "No-change or Decrease"), 
+     col = c("red", "pink" , "blue"),
      pch = c(20,20,20), bty = "n",  pt.cex = 1.5, cex = 0.8 , 
-     text.col = "black", horiz = FALSE, inset = c(0.4, 0.1))
+     text.col = "black", horiz = FALSE, inset = c(0.0, 0.1))
+```
+
+```{r}
+NUMBER_OF_CLUSTERS = 2
+
+color_darkpink = "#e75480"
+CLUSTER_BRANCH_COLORS <- c("blue", "red", color_darkpink)[1:NUMBER_OF_CLUSTERS]
+CLUSTER_LABEL_COLORS <- c("blue", "red", color_darkpink)[1:NUMBER_OF_CLUSTERS]
+
+behavioralMatrixClustering <- as.matrix(clusteringDf)
+rownames(behavioralMatrixClustering) <- paste0(dfActivity$ActivityName, " - #", persons)
+distMatrix <- dist(behavioralMatrixClustering, method="manhattan", diag = T)
+hresults <- distMatrix %>% hclust(method="average")
+
+hc <- hresults %>% 
+      as.dendrogram %>%
+      set("nodes_cex", NUMBER_OF_CLUSTERS) %>%
+      set("labels_col", value = CLUSTER_LABEL_COLORS, k=NUMBER_OF_CLUSTERS) %>%
+      # set("leaves_pch", 19) %>%
+      # set("leaves_col", value = c("gray"), k=NUMBER_OF_CLUSTERS) %>%    
+      set("branches_k_color", value=CLUSTER_BRANCH_COLORS, k=NUMBER_OF_CLUSTERS)
+
+plot(hc)
+legend("topright", 
+     title="Drive=Failure \nChange of Arousal",
+     legend = c("Accelerophobia" , "Normal"), 
+     col = c("red", "blue"),
+     pch = c(20,20,20), bty = "n",  pt.cex = 1.5, cex = 0.8 , 
+     text.col = "black", horiz = FALSE, inset = c(0.0, 0.1))
 ```
 
 ```{r}
 # Store clustering data
 fPath <- str_interp("../data/processed/analysis/TT1_Drive_4_PP.csv")
 dfx <- clusteringDf
-dfx <- cbind(persons, dfx, dfActivity$ActivityName)
-names(dfx) <- c("Subject", "PP_Dev", "Activity")
+dfx <- cbind(persons, behavioralDf$PP_before, dfx, dfActivity$ActivityName)
+names(dfx) <- c("Subject", "PP_Prior", "PP_Dev", "Activity")
 write.csv(dfx, fPath, row.names = F)
 ```
 
 ```{r}
 library(cluster)
-fit <- kmeans(clusteringDf, 3)
+fit <- kmeans(clusteringDf, 2)
 clusplot(clusteringDf, fit$cluster, color=TRUE, shade=TRUE,
-   labels=3, lines=0)
+   labels=2, lines=0)
 ```
 
 ```{r}

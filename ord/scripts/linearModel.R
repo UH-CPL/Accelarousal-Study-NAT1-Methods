@@ -29,7 +29,7 @@ if (DEBUG_MODE) {
   print(length(all$Time))
 }
 
-###################### CORRELLATION #####################################
+###################### CORRELATION #####################################
 behavioralColumns <- BEHAVIORAL_COLUMNS
 behavioralMatrix <- matrix(nrow = length(persons), ncol = length(behavioralColumns))
 
@@ -66,6 +66,13 @@ dev.off()
 print(summary(linearModel_AllSubjects))
 print("ANOVA:")
 print(anova(linearModel_AllSubjects))
+
+# Export the anova table
+lmCoeffs <- summary(linearModel_AllSubjects)$coefficients
+lmAnova <- anova(linearModel_AllSubjects)
+
+print(xtable(lmCoeffs, digits=c(0,5,5,5,5,5)))
+print(xtable(lmAnova), digits=c(0,5,5,5,5,5))
 
 # Log
 sink(str_interp("./outputs/linearmodel/lm_Prev_${tPre}s_Next_${tNext}s.txt", list(tPre = TIME_PREV_SECONDS, tNext = TIME_NEXT_SECONDS)))

@@ -35,7 +35,7 @@ if (DEBUG_MODE) {
   print(length(all$Time))
 }
 
-###################### CORRELLATION #####################################
+###################### CORRELATION #####################################
 behavioralColumns <- BEHAVIORAL_COLUMNS
 behavioralMatrix <- matrix(nrow = length(persons), ncol = length(behavioralColumns))
 
@@ -60,8 +60,8 @@ perfDf <- data.frame(
   Precision = double(nPerfRow),
   Recall = double(nPerfRow),
   Spec = double(nPerfRow),
-  F1 = double(nPerfRow),
   NPV = double(nPerfRow),
+  F1 = double(nPerfRow),
   AUC = double(nPerfRow),
   stringsAsFactors = FALSE
 )
@@ -75,9 +75,9 @@ if (ML_USE_CLUSTER) {
 # Train
 trainAndTestModel <- function(p, all, idx = 1, useData = "All", useCluster = F) {
   if (!is.na(p) && idx > 0) {
-    pData <- getSampleSegmentedData(p, all, window = TIME_PREV_SECONDS)
+    pData <- getSampleSegmentedData(p, all, window = 1)
   } else {
-    pData <- getSampleSegmentedData(NA, all, window = TIME_PREV_SECONDS)
+    pData <- getSampleSegmentedData(NA, all, window = 1)
   }
 
   pData <- pData[!is.na(pData$ppNext), ]
@@ -128,6 +128,7 @@ trainAndTestModel <- function(p, all, idx = 1, useData = "All", useCluster = F) 
 
   nHigh <- nrow(pSelected[pSelected$clsPP == "High", ])
   nLow <- nrow(pSelected[pSelected$clsPP == "Low", ])
+  pSelected <- pSelected %>% mutate(clsPP = ifelse(clsPP == "High", 1, 0))
 
   if(DEBUG_MODE) {
     print(paste("High =", nHigh))
@@ -151,10 +152,9 @@ trainAndTestModel <- function(p, all, idx = 1, useData = "All", useCluster = F) 
     colsample_bytree = 1,
     stratified = T
   )
-  pSelected <- pSelected %>% mutate(clsPP = ifelse(clsPP == "High", 1, 0))
-  posScale <- nLow/nHigh
+  posScale <- (nLow/nHigh)^2
   if (posScale < 1) {
-    posScale = nHigh/nLow
+    posScale = 1
   }
 
   aucs <- c()

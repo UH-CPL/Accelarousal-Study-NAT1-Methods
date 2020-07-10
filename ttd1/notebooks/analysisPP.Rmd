@@ -19,12 +19,14 @@ drive4 <- read.csv('../data/processed/Analysis/TT1_Drive_4_PP.csv', stringsAsFac
 set.seed(43)
 combinedDf <- cbind(drive4, 
                     drive1$MeanPP_Seg0, 
+                    drive2$MeanPP, drive3$MeanPP,
                     drive2$MeanPP_SegMax, drive3$MeanPP_SegMax, 
                     drive2$MeanPP_Seg0, drive3$MeanPP_Seg0,
                     drive2$StdPP, drive3$StdPP 
                   )
 names(combinedDf) <- c(names(drive4), 
                        "PP_Dev_1_Turning",
+                       "PP_Dev_2", "PP_Dev_3", 
                        "PP_Dev_2_Straight", "PP_Dev_3_Straight", 
                        "PP_Dev_2_Turning", "PP_Dev_3_Turning", 
                        "Std_PP_2", "Std_PP_3")
@@ -46,6 +48,7 @@ combinedDf_Motoric$Subject <- as.factor(combinedDf_Motoric$Subject)
 COLOR_NORMAL <- list(color='rgb(120,120,120)')
 COLOR_COGNITIVE <- list(color='rgb(158,202,225)')
 COLOR_MOTORIC <- list(color='rgb(58,200,225)')
+COLOR_FAILURE_PRIOR <- list(color='rgb(158,202,225)')
 COLOR_FAILURE <- list(color='red')
 
 yAxis <- list(
@@ -53,8 +56,12 @@ yAxis <- list(
   range=c(-0.3, 0.5)
 )
 
-THRESHOLD_MILD = 0.07
-THRESHOLD_EXTREME = 0.2
+# Apply Otsu algorithm to select threshold
+ppDev <- combinedDf$PP_Dev
+ppDevArray <- matrix(ppDev ,nrow = 1,ncol = length(ppDev))
+  
+THRESHOLD_MILD = otsu(ppDevArray, range=c(min(ppDev), max(ppDev))) # Expected Threshold > 0.042
+print(paste0('Threshold: ', THRESHOLD_MILD))
 
 MARKER_LINE_MILD = list(color="blue")
 MARKER_LINE_EXTREME = list(color="red")
@@ -65,12 +72,13 @@ fig_NoStressor <- plot_ly(combinedDf_NoStressor, x = ~Subject, y = ~PP_Dev_2_Str
   add_trace(y = ~PP_Dev_3_Straight, name = 'Motoric - Mean PP (Straight)', marker=COLOR_MOTORIC) %>% 
   add_trace(y = ~PP_Dev_2_Turning, name = 'Cognitive - Mean PP (Turning)', marker=COLOR_COGNITIVE) %>% 
   add_trace(y = ~PP_Dev_3_Turning, name = 'Motoric - Mean PP (Turning)', marker=COLOR_MOTORIC) %>% 
+  add_trace(y = ~PP_Prior, name = 'Failure - Prior PP', marker=COLOR_FAILURE_PRIOR) %>% 
   add_trace(y = ~PP_Dev, name = 'Failure - PP Deviation', marker=COLOR_FAILURE) %>% 
   add_segments(x="#01", xend="#41", y = THRESHOLD_MILD, yend = THRESHOLD_MILD, name="Threshold: Mild Change of PP",
                            line=list(color="blue", dash = 'dot')) %>%
   # add_segments(x="#01", xend="#41", y = THRESHOLD_EXTREME, yend = THRESHOLD_EXTREME, name="Threshold: Extreme Change of PP",
   #                          line=list(color="darkred", dash = 'dot')) %>%
-  layout(yaxis = yAxis, barmode = 'group', title="Failure Driving \n Group=No Stressor")
+  layout(yaxis = yAxis, barmode = 'group', title="No Stressor")
 
 htmltools::tagList(fig_NoStressor)
 ```
@@ -80,12 +88,13 @@ fig_Cognitive <- plot_ly(combinedDf_Cognitive, x = ~Subject, y = ~PP_Dev_2_Strai
   add_trace(y = ~PP_Dev_3_Straight, name = 'Motoric - Mean PP (Straight)', marker=COLOR_MOTORIC) %>% 
   add_trace(y = ~PP_Dev_2_Turning, name = 'Cognitive - Mean PP (Turning)', marker=COLOR_COGNITIVE) %>% 
   add_trace(y = ~PP_Dev_3_Turning, name = 'Motoric - Mean PP (Turning)', marker=COLOR_MOTORIC) %>% 
+  add_trace(y = ~PP_Prior, name = 'Failure - Prior PP', marker=COLOR_FAILURE_PRIOR) %>% 
   add_trace(y = ~PP_Dev, name = 'Failure - PP Deviation', marker=COLOR_FAILURE) %>% 
   add_segments(x="#02", xend="#22", y = THRESHOLD_MILD, yend = THRESHOLD_MILD, name="Threshold: Mild Change of PP",
                            line=list(color="blue", dash = 'dot')) %>%
   # add_segments(x="#02", xend="#22", y = THRESHOLD_EXTREME, yend = THRESHOLD_EXTREME, name="Threshold: Extreme Change of PP",
   #                          line=list(color="darkred", dash = 'dot')) %>%
-  layout(yaxis = yAxis, barmode = 'group', title="Failure Driving \n Group=Cognitive")
+  layout(yaxis = yAxis, barmode = 'group', title="Stressor = Cognitive")
 
 htmltools::tagList(fig_Cognitive)
 ```
@@ -93,16 +102,17 @@ htmltools::tagList(fig_Cognitive)
 
 
 ```{r, warning=F}
-fig_Motoric <- plot_ly(combinedDf_Motoric, x = ~Subject, y = ~PP_Dev_2_Straight, type = 'bar', name = 'Cognitive - Mean PP (Straight)', marker=COLOR_COGNITIVE) %>%
-  add_trace(y = ~PP_Dev_3_Straight, name = 'Motoric - Mean PP (Straight)', marker=COLOR_MOTORIC) %>% 
-  add_trace(y = ~PP_Dev_2_Turning, name = 'Cognitive - Mean PP (Turning)', marker=COLOR_COGNITIVE) %>% 
-  add_trace(y = ~PP_Dev_3_Turning, name = 'Motoric - Mean PP (Turning)', marker=COLOR_MOTORIC) %>% 
-  add_trace(y = ~PP_Dev, name = 'Failure - PP Deviation', marker=COLOR_FAILURE) %>% 
-  add_segments(x="#05", xend="#31", y = THRESHOLD_MILD, yend = THRESHOLD_MILD, name="Threshold: Mild Change of PP",
+fig_Motoric <- plot_ly(combinedDf_Motoric, x = ~Subject, y = ~PP_Dev_2_Straight, type = 'bar', name = 'Arousal in Drive C - Straight segment', marker=COLOR_COGNITIVE, width=870) %>%
+  add_trace(y = ~PP_Dev_3_Straight, name = 'Arousal in Drive M - Straight segment', marker=COLOR_MOTORIC) %>% 
+  add_trace(y = ~PP_Dev_2_Turning, name = 'Arousal in Drive C - Turning segment', marker=COLOR_COGNITIVE) %>% 
+  add_trace(y = ~PP_Dev_3_Turning, name = 'Arousal in Drive M - Turning segment', marker=COLOR_MOTORIC) %>%
+  add_trace(y = ~PP_Prior, name = 'Arousal in Drive F - Under prior stressor', marker=COLOR_FAILURE_PRIOR) %>% 
+  add_trace(y = ~PP_Dev, name = 'Arousal in Drive F - Unintended acceleration', marker=COLOR_FAILURE) %>% 
+  add_segments(x="#05", xend="#31", y = THRESHOLD_MILD, yend = THRESHOLD_MILD, name="Threshold",
                            line=list(color="blue", dash = 'dot')) %>%
   # add_segments(x="#05", xend="#31", y = THRESHOLD_EXTREME, yend = THRESHOLD_EXTREME, name="Threshold: Extreme Change of PP",
   #                          line=list(color="darkred", dash = 'dot')) %>%
-  layout(yaxis = yAxis, barmode = 'group', title="Failure Driving \n Group: Motoric")
+  layout(yaxis = yAxis, barmode = 'group', title="Stressor = Motoric")
 
 htmltools::tagList(fig_Motoric)
 ```
@@ -115,20 +125,93 @@ combinedDf$Activity = as.factor(combinedDf$Activity)
 combinedDf$PP_Dev_Group = ifelse(combinedDf$PP_Dev > THRESHOLD_MILD, 1, 0)
 ```
 
+### Extract data for important features
 ```{r}
-model = lme(PP_Dev ~ 
+importantFeaturesDf <- combinedDf %>% select(Subject, Std_PP_3, PP_Dev_2_Turning, Activity, PP_Dev, PP_Dev_Group)
+```
+
+```{r}
+linearModel1 <- lm(PP_Dev ~ 
+              + abs(PP_Dev_2_Straight)
+              + abs(PP_Dev_3_Straight)
+              + abs(PP_Dev_2_Turning) 
+              + abs(PP_Dev_3_Turning)
+              # + Std_PP_2
+              + Std_PP_3
+              + abs(PP_Prior)
+              + factor(Activity), 
+            data=combinedDf)
+
+# anova(model)
+summary(linearModel1)
+plot(linearModel1)
+```
+
+```{r}
+linearModel2 <- lme(PP_Dev ~ 
               abs(PP_Dev_2_Straight)
               + abs(PP_Dev_3_Straight)
               + abs(PP_Dev_2_Turning) 
               + abs(PP_Dev_3_Turning)
+              + Std_PP_3
+              + abs(PP_Prior)
               + factor(Activity), 
             random=~1|Subject,
             data=combinedDf,
             method="REML")
 
+# anova(linearModel2)
+summary(linearModel2)
+plot(linearModel2)
+```
+
+# Linear Model from Drive C
+```{r}
+linearModelC <- lm(PP_Dev ~
+              abs(PP_Dev_2)
+              + Std_PP_2
+              + factor(Activity),
+            data=combinedDf)
+
 # anova(model)
-summary(model)
-plot(model)
+summary(linearModelC)
+plot(linearModelC)
+```
+
+```{r}
+linearModelC_Segments <- lm(PP_Dev ~ 
+                abs(PP_Dev_2_Straight)
+              + abs(PP_Dev_2_Turning)
+              + Std_PP_2,
+            data=combinedDf)
+
+# anova(model)
+summary(linearModelC_Segments)
+plot(linearModelC_Segments)
+```
+
+# Linear Model from Drive M
+```{r}
+combinedDfNoOutlier <- combinedDf[combinedDf$Subject != "#05",]
+linearModelM <- lm(PP_Dev ~ 
+              PP_Dev_3
+              + Std_PP_3,
+            data=combinedDfNoOutlier)
+
+# anova(model)
+summary(linearModelM)
+plot(linearModelM)
+```
+
+```{r}
+# Export the anova table
+library(xtable)
+lmCoeffs <- summary(linearModel1)$coefficients
+lmAnova <- anova(linearModel1)
+
+print(xtable(lmCoeffs, digits=c(0,5,5,5,5)))
+print(xtable(lmAnova), digits=c(0,5,5,5,5))
+
 ```
 
 
@@ -140,9 +223,18 @@ combinedDf$Activity_NO <- ifelse(combinedDf$Activity == "NO", 1, 0)
 combinedDf$Activity_C <- ifelse(combinedDf$Activity == "C", 1, 0)
 combinedDf$Activity_M <- ifelse(combinedDf$Activity == "M", 1, 0)
 combinedDf$Activity <- NULL
+combinedDf$PP_Dev_1_Turning <- NULL
+
+# According to Linear model
+combinedDf$PP_Dev_3_Straight <- abs(combinedDf$PP_Dev_3_Straight)
+combinedDf$PP_Dev_2_Turning <- abs(combinedDf$PP_Dev_2_Turning)
+combinedDf$PP_Dev_3_Turning <- abs(combinedDf$PP_Dev_3_Turning)
+combinedDf$PP_Prior <- abs(combinedDf$PP_Prior) # NULL
 
 combinedDf$Class <- ifelse(combinedDf$PP_Dev_Group == 1, T, F)
 combinedDf$PP_Dev_Group <- NULL
+
+print(names(combinedDf))
 ```
 
 ```{r}
@@ -151,50 +243,220 @@ combinedDf$PP_Dev_Group <- NULL
 ```
 
 ```{r}
+set.seed(39)
 n_folds <- 3
 params <- param <- list(objective       = "binary:logistic", 
                booster          = "gbtree",
                eval_metric      = "auc",
                eta              = 0.1,
-               max_depth        = 8,
+               max_depth        = 10,
                alpha            = 1,
                lambda           = 0,
-               gamma            = 0.3,
+               gamma            = 0.45,
                min_child_weight = 0.3,
                subsample        = 1,
-               colsample_bytree = 0.5)
+               colsample_bytree = 1)
            
 # XGBoost Model         
 xgb_m <- xgb.cv(   params               = param,
                   data = as.matrix(combinedDf %>% select(-Class)) ,
                   label =  combinedDf$Class,
-                  nrounds             = 500,
+                  nrounds             = 100,
                   verbose             = F,
                   prediction          = T,
-                  maximize            = T,
+                  maximize            = T, # Change this value to F will help to run with more itineration
                   nfold               = n_folds,
                   metrics             = c("auc", "error"),
-                  early_stopping_rounds = 100,
-                  stratified            = F,
-                  scale_pos_weight      = 3.05)
+                  early_stopping_rounds = 50,
+                  stratified            = T,
+                  scale_pos_weight      = 7/14)
 
 # xgb_m$evaluation_log[xgb_m$best_iteration,"test_auc_mean"]
 xgb_m$evaluation_log[xgb_m$best_iteration,]
 
 ```
+```{r}
+# Prediction
+combinedDf$clsPred <- round(xgb_m$pred)
+
+computePerformanceResults <- function(sdat){
+  sdat = sdat[complete.cases(sdat),]
+  acc = sum(sdat[,1] == sdat[,2])/nrow(sdat)
+  conf_mat = table(sdat)
+  specif = conf_mat[1,1]/sum(conf_mat[,1])
+  sensiv = conf_mat[2,2]/sum(conf_mat[,2])
+  preci =  conf_mat[2,2]/sum(conf_mat[2,])
+  npv =    conf_mat[1,1]/sum(conf_mat[1,])
+  return(c(acc,specif,sensiv,preci,npv))
+}
+
+# Get average performance
+performance <- computePerformanceResults(combinedDf %>% select(Class, clsPred))
+acc <- performance[1]
+prec <- performance[4]
+recall <- performance[3]
+spec <- performance[2]
+npv <- performance[5]
+f1 <- (2 * recall * prec) / (recall + prec)
+auc <- as.numeric(xgb_m$evaluation_log[xgb_m$best_iteration, "test_auc_mean"])
+
+print(paste("Accuracy=", round(acc, 2)))
+print(paste("Precision=", round(prec, 2)))
+print(paste("Recall=", round(recall, 2)))
+print(paste("Specificity=", round(spec, 2)))
+print(paste("NPV=", round(npv, 2)))
+print(paste("F1=", round(f1, 2)))
+print(paste("AUC=", round(auc, 2)))
+```
+
+```{r}
+# Importance
+bst <- xgboost(   params               = param,
+                  data = as.matrix(combinedDf %>% select(-Class)) ,
+                  label =  combinedDf$Class,
+                  nrounds             = 100,
+                  verbose             = F,
+                  prediction          = T,
+                  maximize            = T, # Change this value to F will help to run with more itineration
+                  nfold               = n_folds,
+                  metrics             = c("auc", "error"),
+                  early_stopping_rounds = 50,
+                  stratified            = T,
+                  scale_pos_weight      = 1)
+importanceDf <- xgb.importance(colnames(combinedDf), model = bst)
+print(importanceDf)
+```
 
 ```{r}
 library(pROC)
+
+dfROC <- pROC::roc(response = ifelse(combinedDf$Class==T, 1, 0),
+               predictor = round(xgb_m$pred),
+               levels=c(0, 1), direction = "<")
 
 # it = which.max(xgb_m$evaluation_log$test_auc_mean)
 # best.iter = xgb_m$evaluation_log$iter[it]
 # best.iter 
 
 plot(pROC::roc(response = ifelse(combinedDf$Class==T, 1, 0),
-               predictor = xgb_m$pred,
-               levels=c(0, 1)),
+               predictor = round(xgb_m$pred),
+               levels=c(0, 1), direction = "<"), 
+     legacy.axes = TRUE,
+     main="ROC Curve", 
      lwd=1.5) 
 ```
 
+# Important features
+```{r}
+# Eleminate #5 who has an exceptional data to find a better threshold
+stdPP3 <- sort(importantFeaturesDf$Std_PP_3, decreasing = T)[2:length(importantFeaturesDf$Std_PP_3)]
+stdPP3Array <- matrix(stdPP3 ,nrow = 1,ncol = length(stdPP3))
+  
+maxStdPP3 <- sort(importantFeaturesDf$Std_PP_3, decreasing = T)[2]
+PP_DEV_3_THRESHOLD <- otsu(stdPP3Array, range=c(min(stdPP3), maxStdPP3)) # Expected Threshold = 0.088
+print(paste0('Threshold: ', PP_DEV_3_THRESHOLD))
+
+importantFeaturesDf$PP_Dev_3_Group <- ifelse(importantFeaturesDf$Std_PP_3 > PP_DEV_3_THRESHOLD, 1, 0)
+write.csv(importantFeaturesDf, "../outputs/importantFeatures.csv")
+```
+
+# Venn diagram
+```{r}
+library(VennDiagram)
+library(RColorBrewer)
+ 
+M_Low <- rownames(importantFeaturesDf[importantFeaturesDf$PP_Dev_3_Group==0,])
+M_High <- rownames(importantFeaturesDf[importantFeaturesDf$PP_Dev_3_Group==1,])
+
+F_Low <- rownames(importantFeaturesDf[importantFeaturesDf$PP_Dev_Group==0,])
+F_High <- rownames(importantFeaturesDf[importantFeaturesDf$PP_Dev_Group==1,])
+
+jpeg("../plots/venn/venn_All.png", res=150, width=900)
+venn.plot <- venn.diagram(
+  list(M_Low, F_Low, M_High, F_High), NULL, 
+  fill=c("blue", "blue", "red", "red"), 
+  alpha=c(0.5,0.5,0.5,0.5), 
+  resolution = 150,
+  cex = 1, 
+  cat.fontface=1, 
+  category.names=c("Drive=M\n SD=Low\n", "Drive=F\n Arousal=Low\n", "Drive=M\n SD=High\n", "Drive=F\n Arousal=High\n")
+)
+grid.draw(venn.plot)
+dev.off()
+# 
+# jpeg("../plots/venn/venn_High.png", res=150, width=700)
+# venn.plot <- venn.diagram(
+#   list(M_High, F_High), NULL, 
+#   fill=c("pink", "red"), 
+#   alpha=c(0.5,0.5), 
+#   resolution = 150,
+#   cex = 1, 
+#   cat.fontface=1, 
+#   category.names=c("Drive=M", "Drive=F")
+# )
+# grid.draw(venn.plot)
+# dev.off()
+```
+
+### Plot feature importance
+```{r}
+yAxis <- list(
+  title = 'Importance',
+  range=c(0.0, 1.0)
+)
+xAxis <- list(
+  title = ''
+)
+importanceDf$FeatureName <- lapply(importanceDf$Feature, function(x) {
+  ifelse(x=="Std_PP_3", "SD of Arousal\n in Drive M", 
+         ifelse(x=="PP_Dev_2_Turning", "Arousal in Drive C\nat turning segments", 
+            ifelse(x=="Activity_C", "Prior stressor\n is Cognitive", x)))
+})
+
+fig_Importance <- plot_ly(importanceDf, x = ~FeatureName, y = ~Gain, type = 'bar', name = 'Gain', width=600) %>%
+  add_trace(y = ~Cover, name = 'Cover') %>% 
+  add_trace(y = ~Frequency, name = 'Frequency') %>% 
+  layout(yaxis = yAxis, xaxis=xAxis, barmode = 'group', title="Feature Importance") %>% 
+  config(.Last.value, mathjax = 'cdn')
+
+htmltools::tagList(fig_Importance)
+```
+
+### Feature
+```{r}
+classColors <- c("blue", "red")
+figStdVsDev <- plot_ly(data = importantFeaturesDf, x = ~Std_PP_3, y = ~PP_Dev, 
+                       color=~factor(PP_Dev_Group), colors=classColors,
+                       marker=list(text="X")) %>%
+  layout(xaxis=list(title="SD of Arousal in Motoric Drive \n Hyphenated line indicates discriminative boundary"), yaxis=list(title="Arousal at catastrophic event"), showscale=F) %>%
+  layout(shapes=list(
+    list(x0=0.088, x1=0.088, y0=-0.1, y1=0.25, line=list(dash="dot", width=1, color="green"))
+  ))
+htmltools::tagList(figStdVsDev)
+```
+
+```{r}
+classColors <- c("blue", "red")
+figStdVsDev <- plot_ly(data = importantFeaturesDf, x = ~abs(PP_Dev_2_Turning), y = ~PP_Dev, 
+                       color=~factor(PP_Dev_Group), colors=classColors,
+                       marker=list(text="X")) %>%
+  layout(xaxis=list(title="SD of Arousal in Motoric Drive"), yaxis=list(title="Arousal at catastrophic event"), showscale=F) %>%
+  layout(shapes=list(
+    list(x0=0.088, x1=0.088, y0=-0.1, y1=0.25, line=list(dash="dot", width=1))
+  ))
+htmltools::tagList(figStdVsDev)
+```
+
+```{r}
+classColors <- c("blue", "red")
+figStdVsDev <- plot_ly(data = importantFeaturesDf, y = ~abs(PP_Dev_2_Turning), x = ~Std_PP_3, 
+                       color=~factor(PP_Dev_Group), colors=classColors,
+                       marker=list(text="X")) %>%
+  layout(xaxis=list(title="SD of Arousal in Motoric Drive"), yaxis=list(title="Arousal at catastrophic event"), showscale=F) %>%
+  layout(shapes=list(
+    list(x0=0.088, x1=0.088, y0=-0.1, y1=0.25, line=list(dash="dot", width=1))
+  ))
+htmltools::tagList(figStdVsDev)
+```
 
 

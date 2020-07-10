@@ -56,6 +56,9 @@ if (!require("caret")) {
 if (!require("dendextend")) {
   install.packages("dendextend")
 }
+if (!require("xtable")) {
+  install.packages("xtable")
+}
 
 print("Test packages ...")
 # library(plotly)

@@ -16,6 +16,8 @@ library(RColorBrewer)
 library(htmltools)
 library(webshot)
 library(dendextend)
+library(xtable)
+library(cluster)
 
 ############# COMMON FUNCTIONS ######################
 ############# 1. General Functions ##################
@@ -163,15 +165,17 @@ getSampleSegmentedData <- function(p, all, window=5) {
 # @param rowNo: subject index
 # @param skipPlot: disable plotting function
 # @returns: void
-computeAndPlotCorrelation <- function(p, all, behavioralMatrix, window=5, rowNo = 1, skipPlot = F) {
+computeAndPlotCorrelation <- function(p, all, behavioralMatrix, window=5, rowNo = 1, skipPlot=F, savePlot=F) {
   # Sample data
   pData <- getSampleSegmentedData(p, all, window)
   
   # Correlation
   pCorrData <- pData %>% select(
-    ppNext, Speed, Accelerator, Brake, HR, BR, Steering,
-    Speed_u, Acc_u, Brake_u, Steering_u,
-    Speed_std, Acc_std, Brake_std, Steering_std
+    ppNext,
+    Speed_u, Speed_std,
+    Acc_u, Acc_std, 
+    Brake_u, Brake_std, 
+    Steering_u, Steering_std
   )
   pCorrData$PP <- pCorrData$ppNext
   pCorrData$ppNext <- NULL
@@ -196,7 +200,18 @@ computeAndPlotCorrelation <- function(p, all, behavioralMatrix, window=5, rowNo 
 
   # Draw
   if (!skipPlot) {
-    cPlot <- corrplot(corMatrix, method = "circle", type = "lower", title = paste0("Correlation Matrix of Subject #", p), mar = c(0, 0, 4, 0), col = col, tl.col = "black")
+    if (savePlot) {
+      jpeg(str_interp("./plots/correlation/corrMatrix_P${p}_${tPre}s_Next_${tNext}s.jpg", list(p=p, tPre = TIME_PREV_SECONDS, tNext = TIME_NEXT_SECONDS)),
+           width = 960,height = 1040, res=140)
+    }
+    title <- paste0("Correlation Matrix of Subject #", p)
+    corNames <- CORRELATION_NAMES
+    corrplot(corMatrix, method = "circle", type = "lower", title = "", mar = c(1, 6, 7, 0), col = col, tl.col = "white", tl.pos='n')
+    text(-0.2, 9:1, corNames, cex=1.3)
+    text(1:9, c(10:2) + 0.2, corNames, srt=90, cex=1.3)
+    if (savePlot) {
+      dev.off()
+    }
   }
 }
 
@@ -204,9 +219,15 @@ computeAndPlotCorrelation <- function(p, all, behavioralMatrix, window=5, rowNo 
 # @param all: Data frame of all subjects
 # @param skipPlot: disable plotting function
 # @returns: void
-computeAndPlotCorrelationOfAllSubjects <- function(all, window=5, skipPlot = F) {
+computeAndPlotCorrelationOfAllSubjects <- function(all, window=5, skipPlot=F, savePlot=F) {
   # Select data
-  pCorrData <- all %>% select(ppNext, Speed, Accelerator, Brake, HR, BR, Steering, Speed_u, Speed_std, Acc_u, Acc_std, Brake_u, Brake_std, Steering_u, Steering_std)
+  pCorrData <- all %>% select(
+    ppNext,
+    Speed_u, Speed_std,
+    Acc_u, Acc_std, 
+    Brake_u, Brake_std, 
+    Steering_u, Steering_std
+  )
   
   # Sample data
   pCorrData <-getSampleSegmentedData(NA, pCorrData, window)
@@ -220,7 +241,18 @@ computeAndPlotCorrelationOfAllSubjects <- function(all, window=5, skipPlot = F) 
   corMatrix <- cor(pCorrData)
 
   if (!skipPlot) {
-    corrplot(corMatrix, method = "circle", type = "lower", title = paste0("Correlation Matrix of All Subjects"), mar = c(0, 0, 4, 0), col = col, tl.col = "black")
+    if (savePlot) {
+      jpeg(str_interp("./plots/correlation/corrMatrix_All_${tPre}s_Next_${tNext}s.jpg", list(tPre = TIME_PREV_SECONDS, tNext = TIME_NEXT_SECONDS)),
+           width = 960,height = 1040, res=140)
+    }
+    title <- paste0("Correlation Matrix of All Subjects")
+    corNames <- CORRELATION_NAMES
+    corrplot(corMatrix, method = "circle", type = "lower", title = "", mar = c(1, 6, 7, 0), col = col, tl.col = "white", tl.pos='n')
+    text(-0.2, 9:1, corNames, cex=1.3)
+    text(1:9, c(10:2) + 0.2, corNames, srt=90, cex=1.3)
+    if (savePlot) {
+      dev.off()
+    }
   }
 }
 

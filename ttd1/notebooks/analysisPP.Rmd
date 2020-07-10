@@ -137,6 +137,7 @@ importantFeaturesDf <- combinedDf %>% select(Subject, Std_PP_3, PP_Dev_2_Turning
 
 # Linear model with all variables
 ```{r}
+combinedDfNoOutlier <- combinedDf[combinedDf$Subject != "#05",]
 linearModel1 <- lm(PP_Dev ~ 
               + abs(PP_Dev_2_Straight)
               + abs(PP_Dev_3_Straight)
@@ -148,7 +149,7 @@ linearModel1 <- lm(PP_Dev ~
               + Std_PP_3_Turning
               + abs(PP_Prior)
               + factor(Activity), 
-            data=combinedDf)
+            data=combinedDfNoOutlier)
 
 # anova(model)
 summary(linearModel1)
@@ -156,7 +157,6 @@ plot(linearModel1)
 ```
 
 ```{r}
-combinedDfNoOutlier <- combinedDf[combinedDf$Subject != "#05",]
 linearModel1 <- lm(PP_Dev ~ 
               + PP_Dev_2
               + PP_Dev_3
@@ -199,7 +199,8 @@ plot(linearModelC_Segments)
 ```{r}
 linearModelM <- lm(PP_Dev ~ 
               PP_Dev_3
-              + Std_PP_3,
+              + Std_PP_3
+              + factor(Activity),
             data=combinedDfNoOutlier)
 
 # anova(model)
@@ -208,9 +209,10 @@ plot(linearModelM)
 ```
 ```{r}
 linearModelM <- lm(PP_Dev ~ 
-              abs(PP_Dev_3_Straight)
-              + abs(PP_Dev_3_Turning)
-              + Std_PP_3,
+              PP_Dev_3_Straight
+              + PP_Dev_3_Turning
+              + Std_PP_3_Straight
+              + Std_PP_3_Turning,
             data=combinedDfNoOutlier)
 
 # anova(model)

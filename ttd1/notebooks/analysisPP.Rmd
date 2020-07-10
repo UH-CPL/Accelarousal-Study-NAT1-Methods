@@ -20,16 +20,21 @@ set.seed(43)
 combinedDf <- cbind(drive4, 
                     drive1$MeanPP_Seg0, 
                     drive2$MeanPP, drive3$MeanPP,
+                    drive2$StdPP, drive3$StdPP,
                     drive2$MeanPP_SegMax, drive3$MeanPP_SegMax, 
                     drive2$MeanPP_Seg0, drive3$MeanPP_Seg0,
-                    drive2$StdPP, drive3$StdPP 
+                    drive2$StdPP_SegMax, drive3$StdPP_SegMax, 
+                    drive2$StdPP_Seg0, drive3$StdPP_Seg0
                   )
 names(combinedDf) <- c(names(drive4), 
                        "PP_Dev_1_Turning",
                        "PP_Dev_2", "PP_Dev_3", 
+                       "Std_PP_2", "Std_PP_3",
                        "PP_Dev_2_Straight", "PP_Dev_3_Straight", 
                        "PP_Dev_2_Turning", "PP_Dev_3_Turning", 
-                       "Std_PP_2", "Std_PP_3")
+                       "Std_PP_2_Straight", "Std_PP_3_Straight", 
+                       "Std_PP_2_Turning", "Std_PP_3_Turning"
+                       )
 
 combinedDf$Subject <- paste0("#", str_pad(combinedDf$Subject, 2, pad="0"))
 ```
@@ -130,14 +135,17 @@ combinedDf$PP_Dev_Group = ifelse(combinedDf$PP_Dev > THRESHOLD_MILD, 1, 0)
 importantFeaturesDf <- combinedDf %>% select(Subject, Std_PP_3, PP_Dev_2_Turning, Activity, PP_Dev, PP_Dev_Group)
 ```
 
+# Linear model with all variables
 ```{r}
 linearModel1 <- lm(PP_Dev ~ 
               + abs(PP_Dev_2_Straight)
               + abs(PP_Dev_3_Straight)
               + abs(PP_Dev_2_Turning) 
               + abs(PP_Dev_3_Turning)
-              # + Std_PP_2
-              + Std_PP_3
+              + Std_PP_2_Straight
+              + Std_PP_3_Straight
+              + Std_PP_2_Turning
+              + Std_PP_3_Turning
               + abs(PP_Prior)
               + factor(Activity), 
             data=combinedDf)
@@ -148,29 +156,27 @@ plot(linearModel1)
 ```
 
 ```{r}
-linearModel2 <- lme(PP_Dev ~ 
-              abs(PP_Dev_2_Straight)
-              + abs(PP_Dev_3_Straight)
-              + abs(PP_Dev_2_Turning) 
-              + abs(PP_Dev_3_Turning)
-              + Std_PP_3
-              + abs(PP_Prior)
-              + factor(Activity), 
-            random=~1|Subject,
-            data=combinedDf,
-            method="REML")
+combinedDfNoOutlier <- combinedDf[combinedDf$Subject != "#05",]
+linearModel1 <- lm(PP_Dev ~ 
+              + PP_Dev_2
+              + PP_Dev_3
+              + Std_PP_2
+              + Std_PP_3, 
+            data=combinedDfNoOutlier)
 
-# anova(linearModel2)
-summary(linearModel2)
-plot(linearModel2)
+# anova(model)
+summary(linearModel1)
+plot(linearModel1)
 ```
+
 
 # Linear Model from Drive C
 ```{r}
 linearModelC <- lm(PP_Dev ~
-              abs(PP_Dev_2)
-              + Std_PP_2
-              + factor(Activity),
+              PP_Dev_2_Straight
+              + PP_Dev_2_Turning
+              + Std_PP_2_Straight
+              + Std_PP_2_Turning,
             data=combinedDf)
 
 # anova(model)
@@ -180,8 +186,7 @@ plot(linearModelC)
 
 ```{r}
 linearModelC_Segments <- lm(PP_Dev ~ 
-                abs(PP_Dev_2_Straight)
-              + abs(PP_Dev_2_Turning)
+              PP_Dev_2
               + Std_PP_2,
             data=combinedDf)
 
@@ -192,9 +197,19 @@ plot(linearModelC_Segments)
 
 # Linear Model from Drive M
 ```{r}
-combinedDfNoOutlier <- combinedDf[combinedDf$Subject != "#05",]
 linearModelM <- lm(PP_Dev ~ 
               PP_Dev_3
+              + Std_PP_3,
+            data=combinedDfNoOutlier)
+
+# anova(model)
+summary(linearModelM)
+plot(linearModelM)
+```
+```{r}
+linearModelM <- lm(PP_Dev ~ 
+              abs(PP_Dev_3_Straight)
+              + abs(PP_Dev_3_Turning)
               + Std_PP_3,
             data=combinedDfNoOutlier)
 
@@ -225,7 +240,13 @@ combinedDf$Activity_M <- ifelse(combinedDf$Activity == "M", 1, 0)
 combinedDf$Activity <- NULL
 combinedDf$PP_Dev_1_Turning <- NULL
 
+combinedDf$Std_PP_2_Straight <- NULL
+combinedDf$Std_PP_2_Turning <- NULL
+combinedDf$Std_PP_3_Straight <- NULL
+combinedDf$Std_PP_3_Turning <- NULL
+
 # According to Linear model
+combinedDf$PP_Dev_2_Straight <- abs(combinedDf$PP_Dev_2_Straight)
 combinedDf$PP_Dev_3_Straight <- abs(combinedDf$PP_Dev_3_Straight)
 combinedDf$PP_Dev_2_Turning <- abs(combinedDf$PP_Dev_2_Turning)
 combinedDf$PP_Dev_3_Turning <- abs(combinedDf$PP_Dev_3_Turning)
@@ -440,7 +461,7 @@ classColors <- c("blue", "red")
 figStdVsDev <- plot_ly(data = importantFeaturesDf, x = ~abs(PP_Dev_2_Turning), y = ~PP_Dev, 
                        color=~factor(PP_Dev_Group), colors=classColors,
                        marker=list(text="X")) %>%
-  layout(xaxis=list(title="SD of Arousal in Motoric Drive"), yaxis=list(title="Arousal at catastrophic event"), showscale=F) %>%
+  layout(xaxis=list(title="SD of Arousal in Motoric Drive"), yaxis=list(title="Arousal at catastrophic event")) %>%
   layout(shapes=list(
     list(x0=0.088, x1=0.088, y0=-0.1, y1=0.25, line=list(dash="dot", width=1))
   ))

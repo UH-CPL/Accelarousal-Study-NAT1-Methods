@@ -7,4 +7,5 @@
 .Rproj.user
 .vscode/*
 ttd1/data/processed/analysis.bk/*
+ttd1/notebooks/VennDiagram*
 */.log

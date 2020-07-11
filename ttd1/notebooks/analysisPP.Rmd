@@ -206,6 +206,41 @@ summary(linearModel1)
 plot(linearModel1)
 ```
 
+## With Prior
+```{r}
+linearModelWPrior <- lm(PP_After ~ 
+                Mean_PP_2_AccHigh
+              + Mean_PP_2_AccLow
+              + Mean_PP_3_AccHigh
+              + Mean_PP_3_AccLow
+              + Std_PP_2_AccHigh
+              + Std_PP_2_AccLow
+              + Std_PP_3_AccHigh
+              + Std_PP_3_AccLow
+              + PP_Prior
+              + factor(ActivityEncoded), 
+            data=combinedDf)
+
+# anova(model)
+summary(linearModelWPrior)
+plot(linearModelWPrior)
+```
+
+```{r}
+linearModel3 <- lm(PP_After ~ 
+                Mean_PP_2_AccHigh
+              + Mean_PP_2_AccLow
+              + Mean_PP_3_AccHigh
+              + Mean_PP_3_AccLow
+              # + PP_Prior
+              + factor(ActivityEncoded), 
+            data=combinedDf)
+
+# anova(model)
+summary(linearModel3)
+plot(linearModel3)
+```
+
 
 ```{r}
 # Export the anova table

@@ -7,6 +7,7 @@ output: html_notebook
 source('../settings/settings.R')
 source('commonFunctions.R')
 library(nlme)
+library(lme4)
 ```
 
 ```{r}
@@ -154,10 +155,26 @@ linearModel1 <- lme(PP_After ~
               + Std_PP_2_AccHigh
               + Std_PP_2_AccLow
               + Std_PP_3_AccHigh
-              + Std_PP_3_AccLow
+              + Std_PP_3_AccLow,
+              # + factor(ActivityEncoded),
+              random=~1|factor(Subject),
+            data=combinedDf)
+
+# anova(model)
+summary(linearModel1)
+plot(linearModel1)
+```
+
+
+```{r}
+linearModel1 <- lm(PP_After ~ 
+                Mean_PP_2_AccHigh
+              + Mean_PP_2_AccLow
+              + Mean_PP_3_AccHigh
+              + Mean_PP_3_AccLow
               # + PP_Prior
-              + factor(ActivityEncoded),
-            data=combinedDf, random = ~1|factor(Subject), method = "REML")
+              + factor(ActivityEncoded), 
+            data=combinedDf)
 
 # anova(model)
 summary(linearModel1)
@@ -174,7 +191,7 @@ thresholdPPAfter <- otsu(ppAfterArray, range=c(min(ppAfter), max(ppAfter))) # Ex
 print(paste0('Threshold: ', thresholdPPAfter))
 
 selectedDf <- combinedDf %>% select(
-                  "Subject", "Activity", "PP_After", "PP_Prior",
+                  "Subject", "Activity", "PP_After", # "PP_Prior",
                   "Mean_PP_2_AccHigh", "Mean_PP_3_AccHigh",
                   "Mean_PP_2_AccLow", "Mean_PP_3_AccLow",
                   "Std_PP_2_AccHigh", "Std_PP_3_AccHigh",
@@ -212,7 +229,7 @@ print(names(selectedDf))
 
 ```{r}
 set.seed(39)
-n_folds <- 5
+n_folds <- 10
 params <- param <- list(objective       = "binary:logistic", 
                booster          = "gbtree",
                eval_metric      = "auc",
@@ -222,7 +239,7 @@ params <- param <- list(objective       = "binary:logistic",
                lambda           = 0,
                gamma            = 0.45,
                min_child_weight = 0.3,
-               subsample        = 0.5,
+               subsample        = 1,
                colsample_bytree = 1)
            
 # XGBoost Model         
@@ -237,7 +254,7 @@ xgb_m <- xgb.cv(   params               = param,
                   metrics             = c("auc", "error"),
                   early_stopping_rounds = 50,
                   stratified            = T,
-                  scale_pos_weight      = 2)
+                  scale_pos_weight      = 1)
 
 # xgb_m$evaluation_log[xgb_m$best_iteration,"test_auc_mean"]
 xgb_m$evaluation_log[xgb_m$best_iteration,]

@@ -37,6 +37,8 @@ names(combinedDf) <- c(names(drive4),
                        )
 
 combinedDf$Subject <- paste0("#", str_pad(combinedDf$Subject, 2, pad="0"))
+
+# combinedDf$PP_Dev_2_Turning <- ifelse(combinedDf$PP_Dev_2_Turning > 0, combinedDf$PP_Dev_2_Turning, combinedDf$PP_Dev_2_Straight)
 ```
 
 ```{r}
@@ -149,7 +151,7 @@ linearModel1 <- lm(PP_Dev ~
               + Std_PP_3_Turning
               + abs(PP_Prior)
               + factor(Activity), 
-            data=combinedDfNoOutlier)
+            data=combinedDf)
 
 # anova(model)
 summary(linearModel1)

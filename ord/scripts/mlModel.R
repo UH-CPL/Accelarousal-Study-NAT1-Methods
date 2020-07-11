@@ -75,9 +75,9 @@ if (ML_USE_CLUSTER) {
 # Train
 trainAndTestModel <- function(p, all, idx = 1, useData = "All", useCluster = F) {
   if (!is.na(p) && idx > 0) {
-    pData <- getSampleSegmentedData(p, all, window = 1)
+    pData <- getSampleSegmentedData(p, all, window = 2)
   } else {
-    pData <- getSampleSegmentedData(NA, all, window = 1)
+    pData <- getSampleSegmentedData(NA, all, window = 2)
   }
 
   pData <- pData[!is.na(pData$ppNext), ]

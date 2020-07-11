@@ -24,9 +24,19 @@ names(mean_pp) <- persons
 std_pp <- vector(mode="list", length=length(persons)) 
 names(std_pp) <- persons
 
-# Segments
+# Mean (Turning)
 mean_pp_seg0 <- vector(mode="list", length=length(persons)) 
 names(mean_pp_seg0) <- persons
+mean_pp_seg0_1 <- vector(mode="list", length=length(persons)) 
+names(mean_pp_seg0_1) <- persons
+mean_pp_seg0_2 <- vector(mode="list", length=length(persons)) 
+names(mean_pp_seg0_2) <- persons
+mean_pp_seg0_3 <- vector(mode="list", length=length(persons)) 
+names(mean_pp_seg0_3) <- persons
+mean_pp_seg0_4 <- vector(mode="list", length=length(persons)) 
+names(mean_pp_seg0_4) <- persons
+
+# Mean (Straight)
 mean_pp_seg1 <- vector(mode="list", length=length(persons)) 
 names(mean_pp_seg1) <- persons
 mean_pp_seg2 <- vector(mode="list", length=length(persons)) 
@@ -38,8 +48,19 @@ names(mean_pp_seg4) <- persons
 mean_pp_max <- vector(mode="list", length=length(persons)) 
 names(mean_pp_max) <- persons
 
+# SD (Turning)
 std_pp_seg0 <- vector(mode="list", length=length(persons)) 
 names(std_pp_seg0) <- persons
+std_pp_seg0_1 <- vector(mode="list", length=length(persons)) 
+names(std_pp_seg0_1) <- persons
+std_pp_seg0_2 <- vector(mode="list", length=length(persons)) 
+names(std_pp_seg0_2) <- persons
+std_pp_seg0_3 <- vector(mode="list", length=length(persons)) 
+names(std_pp_seg0_3) <- persons
+std_pp_seg0_4 <- vector(mode="list", length=length(persons)) 
+names(std_pp_seg0_4) <- persons
+
+# SD (Straight)
 std_pp_seg1 <- vector(mode="list", length=length(persons)) 
 names(std_pp_seg1) <- persons
 std_pp_seg2 <- vector(mode="list", length=length(persons)) 
@@ -56,6 +77,11 @@ for(p in persons) {
   pData_act3 <- pData[pData$Activity==3,]
   
   pData_seg0 <- pData[pData$Phase==0,]
+  pData_seg0_1 <- pData[pData$Activity==0 & pData$Phase==0 & pData$Time > 100 & pData$Time < 200,]
+  pData_seg0_2 <- pData[pData$Activity==0 & pData$Phase==0 & pData$Time > 200 & pData$Time < 300,]
+  pData_seg0_3 <- pData[pData$Activity==0 & pData$Phase==0 & pData$Time > 300 & pData$Time < 400,]
+  pData_seg0_4 <- pData[pData$Activity==0 & pData$Phase==0 & pData$Time > 400 & pData$Time < 500,]
+  
   pData_seg1 <- pData[pData$Phase==1 & pData$Activity==3 & pData$Time < 110,]
   pData_seg2 <- pData[pData$Phase==2 & pData$Activity==3 & pData$Time < 250,]
   pData_seg3 <- pData[pData$Phase==3 & pData$Activity==3 & pData$Time < 350,]
@@ -63,7 +89,13 @@ for(p in persons) {
   
   mean_pp[[p]] <- mean(pData_act3$ppLogNormalized)
   std_pp[[p]] <- sd(pData$ppLogNormalized)
+  
   mean_pp_seg0[[p]] <- mean(pData_seg0$ppLogNormalized)
+  mean_pp_seg0_1[[p]] <- mean(pData_seg0_1$ppLogNormalized)
+  mean_pp_seg0_2[[p]] <- mean(pData_seg0_2$ppLogNormalized)
+  mean_pp_seg0_3[[p]] <- mean(pData_seg0_3$ppLogNormalized)
+  mean_pp_seg0_4[[p]] <- mean(pData_seg0_4$ppLogNormalized)
+  
   mean_pp_seg1[[p]] <- mean(pData_seg1$ppLogNormalized)
   mean_pp_seg2[[p]] <- mean(pData_seg2$ppLogNormalized)
   mean_pp_seg3[[p]] <- mean(pData_seg3$ppLogNormalized)
@@ -71,6 +103,11 @@ for(p in persons) {
   mean_pp_max[[p]] <- max(mean_pp_seg1[[p]], mean_pp_seg2[[p]], mean_pp_seg3[[p]], mean_pp_seg4[[p]])
   
   std_pp_seg0[[p]] <- sd(pData_seg0$ppLogNormalized)
+  std_pp_seg0_1[[p]] <- sd(pData_seg0_1$ppLogNormalized)
+  std_pp_seg0_2[[p]] <- sd(pData_seg0_2$ppLogNormalized)
+  std_pp_seg0_3[[p]] <- sd(pData_seg0_3$ppLogNormalized)
+  std_pp_seg0_4[[p]] <- sd(pData_seg0_4$ppLogNormalized)
+  
   std_pp_seg1[[p]] <- sd(pData_seg1$ppLogNormalized)
   std_pp_seg2[[p]] <- sd(pData_seg2$ppLogNormalized)
   std_pp_seg3[[p]] <- sd(pData_seg3$ppLogNormalized)
@@ -171,12 +208,22 @@ dfPP <- as.data.frame(cbind(
                             unlist(std_pp_seg2), 
                             unlist(std_pp_seg3), 
                             unlist(std_pp_seg4),
-                            unlist(std_pp_max)
+                            unlist(std_pp_max),
+                            unlist(mean_pp_seg0_1),
+                            unlist(mean_pp_seg0_2),
+                            unlist(mean_pp_seg0_3),
+                            unlist(mean_pp_seg0_4),
+                            unlist(std_pp_seg0_1),
+                            unlist(std_pp_seg0_2),
+                            unlist(std_pp_seg0_3),
+                            unlist(std_pp_seg0_4)
                     ))
 
 names(dfPP) <- c("MeanPP", "StdPP", 
                  "MeanPP_Seg0", "MeanPP_Seg1", "MeanPP_Seg2", "MeanPP_Seg3", "MeanPP_Seg4", "MeanPP_SegMax",
-                 "StdPP_Seg0", "StdPP_Seg1", "StdPP_Seg2", "StdPP_Seg3", "StdPP_Seg4", "StdPP_SegMax")
+                 "StdPP_Seg0", "StdPP_Seg1", "StdPP_Seg2", "StdPP_Seg3", "StdPP_Seg4", "StdPP_SegMax",
+                 "MeanPP_Seg0_1", "MeanPP_Seg0_2", "MeanPP_Seg0_3", "MeanPP_Seg0_4",
+                 "StdPP_Seg0_1", "StdPP_Seg0_2", "StdPP_Seg0_3", "StdPP_Seg0_4")
 
 behavioralMatrixClustering <- as.matrix(dfPP)
 

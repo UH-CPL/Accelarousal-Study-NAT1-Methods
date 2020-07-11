@@ -55,8 +55,8 @@ names(pp_baseline) <- persons
 
 # Number of peaks
 
-PREV_DISTANCE = 600
-TRACKING_DISTANCE = 150
+PREV_DISTANCE = 300
+TRACKING_DISTANCE = 60
 DRIVE_MODE = 4
 ```
 
@@ -87,6 +87,8 @@ for (p in persons) {
 ```
 
 ```{r}
+DELAY_DISTANCE <- 10
+
 idx <- 1
 plt_AllAcc <- vector(mode="list", length=length(persons)) 
 names(plt_AllAcc) <- persons
@@ -135,7 +137,7 @@ for (p in persons) {
   
     
   pDataBefore <- pData[pData$Distance < incident_starting_time & pData$Distance >= from_time,]
-  pDataAfter <- pData[pData$Distance >= incident_starting_time & pData$Distance <= to_time,]
+  pDataAfter <- pData[pData$Distance >= incident_starting_time + DELAY_DISTANCE & pData$Distance <= to_time,]
   
   # print(nrow(pDataBefore))
   # print(nrow(pDataAfter))
@@ -226,7 +228,7 @@ for (p in persons) {
   to_time <- complete_times[[p]]
     
   dfBefore <- pData[pData$Distance < incident_starting_time & pData$Distance >= from_time,]
-  dfAfter <- pData[pData$Distance >= incident_starting_time & pData$Distance <= to_time,]
+  dfAfter <- pData[pData$Distance >= incident_starting_time + DELAY_DISTANCE  & pData$Distance <= to_time,]
   
   # diffSpeed <- mean(dfAfter$Speed) - mean(dfBefore$Speed)
   brakeMean <- mean(dfAfter$Braking)
@@ -252,7 +254,7 @@ for (p in persons) {
 
 # behavioralMatrix
 
-behavioralDf <- as.data.frame(behavioralMatrix)
+behavioralDf <- as.data.frame(behavioralMatrix, stringsAsFactors=FALSE)
 names(behavioralDf) <- behavioralColumns
 
 behavioralDf
@@ -353,8 +355,12 @@ legend("topright",
 # Store clustering data
 fPath <- str_interp("../data/processed/analysis/TT1_Drive_4_PP.csv")
 dfx <- clusteringDf
-dfx <- cbind(persons, behavioralDf$PP_before, dfx, dfActivity$ActivityName)
-names(dfx) <- c("Subject", "PP_Prior", "PP_Dev", "Activity")
+dfx <- cbind(persons, as.numeric(behavioralDf$PP_before), as.numeric(behavioralDf$PP_u), dfx, dfActivity$ActivityName)
+names(dfx) <- c("Subject", "PP_Prior", "PP_After", "PP_Dev", "Activity")
+
+# Normalize
+dfx <- dfx %>% mutate(PP_Dev_Normalized = ifelse(PP_Prior > 0, PP_After, PP_After - PP_Prior))
+
 write.csv(dfx, fPath, row.names = F)
 ```
 

@@ -6,6 +6,7 @@ output: html_notebook
 ```{r}
 source('../settings/settings.R')
 source('commonFunctions.R')
+library(nlme)
 ```
 
 ```{r}
@@ -26,6 +27,10 @@ combinedDf_Seg1 <- cbind(drive4,
                     drive2$MeanPP_Seg0_1, drive3$MeanPP_Seg0_1,
                     drive2$StdPP_Seg1, drive3$StdPP_Seg1,
                     drive2$StdPP_Seg0_1, drive3$StdPP_Seg0_1,
+                    drive2$MeanPP_AccHigh1, drive3$MeanPP_AccHigh1,
+                    drive2$X.MeanPP_AccLow1, drive3$X.MeanPP_AccLow1,
+                    drive2$StdPP_AccHigh1, drive3$StdPP_AccHigh1,
+                    drive2$StdPP_AccLow1, drive3$StdPP_AccLow1,
                     dfSeg$Seg1
                   )
 combinedDf_Seg2 <- cbind(drive4, 
@@ -34,6 +39,10 @@ combinedDf_Seg2 <- cbind(drive4,
                     drive2$MeanPP_Seg0_2, drive3$MeanPP_Seg0_2,
                     drive2$StdPP_Seg2, drive3$StdPP_Seg2,
                     drive2$StdPP_Seg0_2, drive3$StdPP_Seg0_2,
+                    drive2$MeanPP_AccHigh2, drive3$MeanPP_AccHigh2,
+                    drive2$X.MeanPP_AccLow2, drive3$X.MeanPP_AccLow2,
+                    drive2$StdPP_AccHigh2, drive3$StdPP_AccHigh2,
+                    drive2$StdPP_AccLow2, drive3$StdPP_AccLow2,
                     dfSeg$Seg2
                   )
 combinedDf_Seg3 <- cbind(drive4, 
@@ -42,6 +51,10 @@ combinedDf_Seg3 <- cbind(drive4,
                     drive2$MeanPP_Seg0_3, drive3$MeanPP_Seg0_3,
                     drive2$StdPP_Seg3, drive3$StdPP_Seg3,
                     drive2$StdPP_Seg0_3, drive3$StdPP_Seg0_3,
+                    drive2$MeanPP_AccHigh3, drive3$MeanPP_AccHigh3,
+                    drive2$X.MeanPP_AccLow3, drive3$X.MeanPP_AccLow3,
+                    drive2$StdPP_AccHigh3, drive3$StdPP_AccHigh3,
+                    drive2$StdPP_AccLow3, drive3$StdPP_AccLow3,
                     dfSeg$Seg3
                   )
 combinedDf_Seg4 <- cbind(drive4, 
@@ -50,37 +63,30 @@ combinedDf_Seg4 <- cbind(drive4,
                     drive2$MeanPP_Seg0_4, drive3$MeanPP_Seg0_4,
                     drive2$StdPP_Seg4, drive3$StdPP_Seg4,
                     drive2$StdPP_Seg0_4, drive3$StdPP_Seg0_4,
+                    drive2$MeanPP_AccHigh4, drive3$MeanPP_AccHigh4,
+                    drive2$X.MeanPP_AccLow4, drive3$X.MeanPP_AccLow4,
+                    drive2$StdPP_AccHigh4, drive3$StdPP_AccHigh4,
+                    drive2$StdPP_AccLow4, drive3$StdPP_AccLow4,
                     dfSeg$Seg4
                   )
 
-names(combinedDf_Seg1) <- c(names(drive4), 
-                       "PP_Dev_1_Turning",
-                       "PP_Dev_2_Straight", "PP_Dev_3_Straight", 
-                       "PP_Dev_2_Turning", "PP_Dev_3_Turning", 
-                       "Std_PP_2_Straight", "Std_PP_3_Straight", 
-                       "Std_PP_2_Turning", "Std_PP_3_Turning", 
-                       "Segment")
-names(combinedDf_Seg2) <- c(names(drive4), 
-                       "PP_Dev_1_Turning",
-                       "PP_Dev_2_Straight", "PP_Dev_3_Straight", 
-                       "PP_Dev_2_Turning", "PP_Dev_3_Turning", 
-                       "Std_PP_2_Straight", "Std_PP_3_Straight", 
-                       "Std_PP_2_Turning", "Std_PP_3_Turning", 
-                       "Segment")
-names(combinedDf_Seg3) <- c(names(drive4), 
-                       "PP_Dev_1_Turning",
-                       "PP_Dev_2_Straight", "PP_Dev_3_Straight", 
-                       "PP_Dev_2_Turning", "PP_Dev_3_Turning", 
-                       "Std_PP_2_Straight", "Std_PP_3_Straight", 
-                       "Std_PP_2_Turning", "Std_PP_3_Turning", 
-                       "Segment")
-names(combinedDf_Seg4) <- c(names(drive4), 
-                       "PP_Dev_1_Turning",
-                       "PP_Dev_2_Straight", "PP_Dev_3_Straight", 
-                       "PP_Dev_2_Turning", "PP_Dev_3_Turning", 
-                       "Std_PP_2_Straight", "Std_PP_3_Straight", 
-                       "Std_PP_2_Turning", "Std_PP_3_Turning", 
-                       "Segment")
+common_names <- c("PP_Dev_1_Turning",
+                  "PP_Dev_2_Straight", "PP_Dev_3_Straight", 
+                  "PP_Dev_2_Turning", "PP_Dev_3_Turning", 
+                  "Std_PP_2_Straight", "Std_PP_3_Straight", 
+                  "Std_PP_2_Turning", "Std_PP_3_Turning",
+                  
+                  "Mean_PP_2_AccHigh", "Mean_PP_3_AccHigh",
+                  "Mean_PP_2_AccLow", "Mean_PP_3_AccLow",
+                  "Std_PP_2_AccHigh", "Std_PP_3_AccHigh",
+                  "Std_PP_2_AccLow", "Std_PP_3_AccLow",
+                  
+                  "Segment")
+
+names(combinedDf_Seg1) <- c(names(drive4), common_names)
+names(combinedDf_Seg2) <- c(names(drive4), common_names)
+names(combinedDf_Seg3) <- c(names(drive4), common_names)
+names(combinedDf_Seg4) <- c(names(drive4), common_names)
 
 # combinedDf_Seg1$Subject <- paste0(as.factor(combinedDf_Seg1$Subject), ".S1")
 # combinedDf_Seg2$Subject <- paste0(as.factor(combinedDf_Seg2$Subject), ".S2")
@@ -89,82 +95,114 @@ names(combinedDf_Seg4) <- c(names(drive4),
 
 combinedDf <- rbind(combinedDf_Seg1, combinedDf_Seg2, combinedDf_Seg3, combinedDf_Seg4)
 
-combinedDf$Subject <- paste0("#", str_pad(combinedDf$Subject, 2, pad="0"))
+# combinedDf$Subject <- paste0("#", str_pad(combinedDf$Subject, 2, pad="0"))
 combinedDf$Segment <- as.factor(combinedDf$Segment)
-```
+combinedDf$ActivityEncoded <- factor(ifelse(combinedDf$Activity == "NO", "1", ifelse(combinedDf$Activity == "C", "2", "3")))
 
-```{r}
-combinedDf_NoStressor <- combinedDf[combinedDf$Activity == "NO",]
-combinedDf_Cognitive <- combinedDf[combinedDf$Activity == "C",]
-combinedDf_Motoric <- combinedDf[combinedDf$Activity == "M",]
-
-# combinedDf_NoStressor$Subject <- as.factor(combinedDf_NoStressor$Subject)
-# combinedDf_Cognitive$Subject <- as.factor(combinedDf_Cognitive$Subject)
-# combinedDf_Motoric$Subject <- as.factor(combinedDf_Motoric$Subject)
-```
-
-```{r}
-COLOR_NORMAL <- list(color='rgb(120,120,120)')
-COLOR_COGNITIVE <- list(color='rgb(158,202,225)')
-COLOR_MOTORIC <- list(color='rgb(58,200,225)')
-COLOR_FAILURE <- list(color='red')
-
-THRESHOLD_MILD = 0.07
-THRESHOLD_EXTREME = 0.2
-
-MARKER_LINE_MILD = list(color="blue")
-MARKER_LINE_EXTREME = list(color="red")
-```
-
-```{r}
-library(nlme)
+combinedDf <- combinedDf[complete.cases(combinedDf),]
 combinedDf$Subject = as.factor(combinedDf$Subject)
-combinedDf$Activity = as.factor(combinedDf$Activity)
-combinedDf$PP_Dev_Group = ifelse(combinedDf$PP_Dev > THRESHOLD_MILD, 1, 0)
 ```
 
+
 ```{r}
-model = lm(PP_Dev ~ 
-              abs(PP_Dev_2_Straight) + 
-              abs(PP_Dev_3_Straight) +
-              abs(PP_Dev_2_Turning) + 
-              abs(PP_Dev_3_Turning) + 
+model = lm(PP_After ~ 
+              PP_Dev_2_Straight + 
+              PP_Dev_3_Straight +
+              PP_Dev_2_Turning + 
+              PP_Dev_3_Turning + 
               Std_PP_2_Straight + 
               Std_PP_3_Straight + 
               Std_PP_2_Turning +
               Std_PP_3_Turning +
-              factor(Activity),
-            data=combinedDf,
-            random=~1|as.factor(Subject),
-            method="REML")
+              # PP_Prior +
+              factor(ActivityEncoded),
+            data=combinedDf, random = ~1|factor(Subject), method = "REML")
 
 # anova(model)
 summary(model)
 plot(model)
 ```
 
+# No Random Effects
+```{r}
+linearModel1 <- lm(PP_After ~ 
+                Mean_PP_2_AccHigh
+              + Mean_PP_2_AccLow
+              + Mean_PP_3_AccHigh
+              + Mean_PP_3_AccLow
+              + Std_PP_2_AccHigh
+              + Std_PP_2_AccLow
+              + Std_PP_3_AccHigh
+              + Std_PP_3_AccLow
+              # + PP_Prior
+              + factor(ActivityEncoded),
+            data=combinedDf)
+
+# anova(model)
+summary(linearModel1)
+plot(linearModel1)
+```
+
+
+# With Random Effects
+```{r}
+linearModel1 <- lme(PP_After ~ 
+                Mean_PP_2_AccHigh
+              + Mean_PP_2_AccLow
+              + Mean_PP_3_AccHigh
+              + Mean_PP_3_AccLow
+              + Std_PP_2_AccHigh
+              + Std_PP_2_AccLow
+              + Std_PP_3_AccHigh
+              + Std_PP_3_AccLow
+              # + PP_Prior
+              + factor(ActivityEncoded),
+            data=combinedDf, random = ~1|factor(Subject), method = "REML")
+
+# anova(model)
+summary(linearModel1)
+plot(linearModel1)
+```
+
 ## Machine Learning
 
 ```{r}
-combinedDf$PP_Dev <- NULL
+ppAfter <- combinedDf$PP_After
+ppAfterArray <- matrix(ppAfter, nrow = 1,ncol = length(ppAfter))
+  
+thresholdPPAfter <- otsu(ppAfterArray, range=c(min(ppAfter), max(ppAfter))) # Expected Threshold > 0.10123
+print(paste0('Threshold: ', thresholdPPAfter))
 
-combinedDf$Subject <- NULL
-combinedDf$Activity_NO <- ifelse(combinedDf$Activity == "NO", 1, 0)
-combinedDf$Activity_C <- ifelse(combinedDf$Activity == "C", 1, 0)
-combinedDf$Activity_M <- ifelse(combinedDf$Activity == "M", 1, 0)
-combinedDf$Activity <- NULL
+selectedDf <- combinedDf %>% select(
+                  "Subject", "Activity", "PP_After", "PP_Prior",
+                  "Mean_PP_2_AccHigh", "Mean_PP_3_AccHigh",
+                  "Mean_PP_2_AccLow", "Mean_PP_3_AccLow",
+                  "Std_PP_2_AccHigh", "Std_PP_3_AccHigh",
+                  "Std_PP_2_AccLow", "Std_PP_3_AccLow")
 
-combinedDf$PP_Dev_1_Turning <-NULL
-combinedDf$PP_Prior <-NULL
+selectedDf$Subject <- NULL
+selectedDf$Activity_NO <- ifelse(selectedDf$Activity == "NO", 1, 0)
+selectedDf$Activity_C <- ifelse(selectedDf$Activity == "C", 1, 0)
+selectedDf$Activity_M <- ifelse(selectedDf$Activity == "M", 1, 0)
+selectedDf$Activity <- NULL
 
-combinedDf$InSegment1 <- ifelse(combinedDf$Segment == 1, 1, 0)
-combinedDf$InSegment2 <- ifelse(combinedDf$Segment == 2, 1, 0)
-combinedDf$InSegment3 <- ifelse(combinedDf$Segment == 3, 1, 0)
-combinedDf$InSegment4 <- ifelse(combinedDf$Segment == 4, 1, 0)
-combinedDf$Segment <- NULL
+# selectedDf$PP_Dev_1_Turning <- NULL
+# selectedDf$Std_PP_2_Straight <- NULL
+# selectedDf$Std_PP_2_Turning <- NULL
+# selectedDf$Std_PP_3_Straight <- NULL
+# selectedDf$Std_PP_3_Turning <- NULL
+# 
+# # According to Linear model
+# selectedDf$PP_Dev_2_Straight <- abs(selectedDf$PP_Dev_2_Straight)
+# selectedDf$PP_Dev_3_Straight <- abs(selectedDf$PP_Dev_3_Straight)
+# selectedDf$PP_Dev_2_Turning <- abs(selectedDf$PP_Dev_2_Turning)
+# selectedDf$PP_Dev_3_Turning <- abs(selectedDf$PP_Dev_3_Turning)
+# selectedDf$PP_Prior <- abs(selectedDf$PP_Prior) # NULL
 
-combinedDf$Class <- ifelse(combinedDf$PP_Dev_Group == 1, T, F)
-combinedDf$PP_Dev_Group <- NULL
+selectedDf$Class <- ifelse(selectedDf$PP_After >= thresholdPPAfter, T, F)
+selectedDf$PP_After <- NULL
+
+print(names(selectedDf))
 ```
 
 ```{r}
@@ -173,23 +211,24 @@ combinedDf$PP_Dev_Group <- NULL
 ```
 
 ```{r}
+set.seed(39)
 n_folds <- 5
 params <- param <- list(objective       = "binary:logistic", 
                booster          = "gbtree",
                eval_metric      = "auc",
                eta              = 0.1,
-               max_depth        = 15,
+               max_depth        = 10,
                alpha            = 1,
                lambda           = 0,
                gamma            = 0.45,
                min_child_weight = 0.3,
-               subsample        = 1,
+               subsample        = 0.5,
                colsample_bytree = 1)
            
 # XGBoost Model         
 xgb_m <- xgb.cv(   params               = param,
-                  data = as.matrix(combinedDf %>% select(-Class)) ,
-                  label =  combinedDf$Class,
+                  data = as.matrix(selectedDf %>% select(-Class)) ,
+                  label =  selectedDf$Class,
                   nrounds             = 100,
                   verbose             = F,
                   prediction          = T,
@@ -198,16 +237,17 @@ xgb_m <- xgb.cv(   params               = param,
                   metrics             = c("auc", "error"),
                   early_stopping_rounds = 50,
                   stratified            = T,
-                  scale_pos_weight      = 1/2)
+                  scale_pos_weight      = 2)
 
 # xgb_m$evaluation_log[xgb_m$best_iteration,"test_auc_mean"]
 xgb_m$evaluation_log[xgb_m$best_iteration,]
 
 ```
 
+## Performance Metrics
 ```{r}
 # Prediction
-combinedDf$clsPred <- round(xgb_m$pred)
+selectedDf$clsPred <- round(xgb_m$pred)
 
 computePerformanceResults <- function(sdat){
   sdat = sdat[complete.cases(sdat),]
@@ -221,7 +261,7 @@ computePerformanceResults <- function(sdat){
 }
 
 # Get average performance
-performance <- computePerformanceResults(combinedDf %>% select(Class, clsPred))
+performance <- computePerformanceResults(selectedDf %>% select(Class, clsPred))
 acc <- performance[1]
 prec <- performance[4]
 recall <- performance[3]
@@ -241,10 +281,9 @@ print(paste("AUC=", round(auc, 2)))
 
 ```{r}
 # Importance
-combinedDf$clsPred <- NULL
 bst <- xgboost(   params               = param,
-                  data = as.matrix(combinedDf %>% select(-Class)) ,
-                  label =  combinedDf$Class,
+                  data = as.matrix(selectedDf %>% select(-c(Class, clsPred))) ,
+                  label =  selectedDf$Class,
                   nrounds             = 100,
                   verbose             = F,
                   prediction          = T,
@@ -253,15 +292,15 @@ bst <- xgboost(   params               = param,
                   metrics             = c("auc", "error"),
                   early_stopping_rounds = 50,
                   stratified            = T,
-                  scale_pos_weight      = 1/2)
-importanceDf <- xgb.importance(colnames(combinedDf %>% select(-Class) ), model = bst)
+                  scale_pos_weight      = 1)
+importanceDf <- xgb.importance(colnames(selectedDf %>% select(-c(Class, clsPred))), model = bst)
 print(importanceDf)
 ```
 
 ```{r}
 library(pROC)
 
-dfROC <- pROC::roc(response = ifelse(combinedDf$Class==T, 1, 0),
+dfROC <- pROC::roc(response = ifelse(selectedDf$Class==T, 1, 0),
                predictor = round(xgb_m$pred),
                levels=c(0, 1), direction = "<")
 
@@ -269,26 +308,12 @@ dfROC <- pROC::roc(response = ifelse(combinedDf$Class==T, 1, 0),
 # best.iter = xgb_m$evaluation_log$iter[it]
 # best.iter 
 
-plot(pROC::roc(response = ifelse(combinedDf$Class==T, 1, 0),
+plot(pROC::roc(response = ifelse(selectedDf$Class==T, 1, 0),
                predictor = round(xgb_m$pred),
                levels=c(0, 1), direction = "<"), 
      legacy.axes = TRUE,
      main="ROC Curve", 
      lwd=1.5) 
-```
-
-# Important features
-```{r}
-# Eleminate #5 who has an exceptional data to find a better threshold
-stdPP3 <- sort(importantFeaturesDf$Std_PP_3, decreasing = T)[2:length(importantFeaturesDf$Std_PP_3)]
-stdPP3Array <- matrix(stdPP3 ,nrow = 1,ncol = length(stdPP3))
-  
-maxStdPP3 <- sort(importantFeaturesDf$Std_PP_3, decreasing = T)[2]
-PP_DEV_3_THRESHOLD <- otsu(stdPP3Array, range=c(min(stdPP3), maxStdPP3)) # Expected Threshold = 0.088
-print(paste0('Threshold: ', PP_DEV_3_THRESHOLD))
-
-importantFeaturesDf$PP_Dev_3_Group <- ifelse(importantFeaturesDf$Std_PP_3 > PP_DEV_3_THRESHOLD, 1, 0)
-write.csv(importantFeaturesDf, "../outputs/importantFeatures.csv")
 ```
 
 
@@ -301,13 +326,9 @@ yAxis <- list(
 xAxis <- list(
   title = ''
 )
-importanceDf$FeatureName <- lapply(importanceDf$Feature, function(x) {
-  ifelse(x=="Std_PP_3", "SD of Arousal\n in Drive M", 
-         ifelse(x=="PP_Dev_2_Turning", "Arousal in Drive C\nat turning segments", 
-            ifelse(x=="Activity_C", "Prior stressor\n is Cognitive", x)))
-})
 
-fig_Importance <- plot_ly(importanceDf, x = ~FeatureName, y = ~Gain, type = 'bar', name = 'Gain', width=600) %>%
+importanceDf$Feature <- factor(importanceDf$Feature, levels = importanceDf[order(-Gain),]$Feature)
+fig_Importance <- plot_ly(importanceDf, x = ~Feature, y = ~Gain, type = 'bar', name = 'Gain', width=600) %>%
   add_trace(y = ~Cover, name = 'Cover') %>% 
   add_trace(y = ~Frequency, name = 'Frequency') %>% 
   layout(yaxis = yAxis, xaxis=xAxis, barmode = 'group', title="Feature Importance") %>% 
@@ -315,7 +336,5 @@ fig_Importance <- plot_ly(importanceDf, x = ~FeatureName, y = ~Gain, type = 'bar
 
 htmltools::tagList(fig_Importance)
 ```
-
-
 
 

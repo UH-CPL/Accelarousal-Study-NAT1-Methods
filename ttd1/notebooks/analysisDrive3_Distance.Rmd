@@ -11,11 +11,57 @@ source('commonFunctions.R')
 ```{r}
 persons <- SELECTED_SUBJECTS
 
-all_Drive3 <- read.csv('..//data/processed/distancewise/TT1_Drive_3_30m_30m.csv')
+all_Drive2 <- read.csv('..//data/processed/distancewise/TT1_Drive_3_15m_15m.csv')
+all_Drive3 <- read.csv('..//data/processed/distancewise/TT1_Drive_3_15m_15m.csv')
 all_Drive3$Subject <- as.factor(all_Drive3$Subject)
 all_Drive3$logPerspiration <- log(all_Drive3$Perspiration)
 ```
 
+# Acceleration Plot
+```{r}
+computeThreshold <- function(x, xmin=min(x), xmax=max(x)) {
+  x <- x[x >= xmin & x <= xmax]
+  xArr <- matrix(x, nrow = 1, ncol = length(x))
+  threshold <- otsu(xArr, range=c(xmin, xmax))
+  return(threshold)
+}
+computeThresholdForAcceleration <- function(acc){
+  return(computeThreshold(acc, xmin=0, xmax=20))
+}
+findModes <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+```
+
+```{r}
+acc_thresholds <- vector(mode="list", length=length(persons)) 
+names(acc_thresholds) <- persons
+
+acc_sd_thresholds <- vector(mode="list", length=length(persons)) 
+names(acc_sd_thresholds) <- persons
+
+speed_sd_thresholds <- vector(mode="list", length=length(persons)) 
+names(speed_sd_thresholds) <- persons
+
+for (p in persons) {
+  pData <- all_Drive2[(all_Drive2$Subject==as.integer(p) | all_Drive2$Subject==p),]
+  acc_th <- computeThresholdForAcceleration(pData$Acceleration)
+  acc_th_sd <- computeThresholdForAcceleration(pData$Acc_std)
+  speed_th_sd <- computeThresholdForAcceleration(pData$Speed_std)
+  acc_thresholds[[p]] <- as.numeric(acc_th)
+  acc_sd_thresholds[[p]] <- as.numeric(acc_th_sd)
+  speed_sd_thresholds[[p]] <- as.numeric(speed_th_sd)
+  
+  acc_pl <- ggplot(pData, aes(x=Acceleration)) + geom_density() + geom_vline(aes(xintercept=acc_th), color="blue", linetype="dashed", size=1)
+  acc_sd_pl <- ggplot(pData, aes(x=Acc_std)) + geom_density() + geom_vline(aes(xintercept=acc_th_sd), color="red", linetype="dashed", size=1)
+  speed_sd_pl <- ggplot(pData, aes(x=Speed_std)) + geom_density() + geom_vline(aes(xintercept=speed_th_sd), color="red", linetype="dashed", size=1)
+  
+  plot(speed_sd_pl)
+  print(paste0(p, " - Threshold (Acc) =", acc_th, " & (Acc SD) =", acc_th_sd, " & (Speed SD) =", acc_th_sd))
+  
+}
+```
 
 ```{r}
 mean_pp <- vector(mode="list", length=length(persons)) 
@@ -72,10 +118,59 @@ names(std_pp_seg4) <- persons
 std_pp_max <- vector(mode="list", length=length(persons)) 
 names(std_pp_max) <- persons
 
+# Acceleration Partitioning
+mean_pp_HighAcc <- vector(mode="list", length=length(persons)) 
+names(mean_pp_HighAcc) <- persons
+mean_pp_LowAcc <- vector(mode="list", length=length(persons)) 
+names(mean_pp_LowAcc) <- persons
+
+std_pp_HighAcc <- vector(mode="list", length=length(persons)) 
+names(std_pp_HighAcc) <- persons
+std_pp_LowAcc <- vector(mode="list", length=length(persons)) 
+names(std_pp_LowAcc) <- persons
+
+# Accel + Segmentation
+mean_pp_HighAcc1 <- vector(mode="list", length=length(persons)) 
+names(mean_pp_HighAcc1) <- persons
+mean_pp_LowAcc1 <- vector(mode="list", length=length(persons)) 
+names(mean_pp_LowAcc1) <- persons
+std_pp_HighAcc1 <- vector(mode="list", length=length(persons)) 
+names(std_pp_HighAcc1) <- persons
+std_pp_LowAcc1 <- vector(mode="list", length=length(persons)) 
+names(std_pp_LowAcc1) <- persons
+
+mean_pp_HighAcc2 <- vector(mode="list", length=length(persons)) 
+names(mean_pp_HighAcc2) <- persons
+mean_pp_LowAcc2 <- vector(mode="list", length=length(persons)) 
+names(mean_pp_LowAcc2) <- persons
+std_pp_HighAcc2 <- vector(mode="list", length=length(persons)) 
+names(std_pp_HighAcc2) <- persons
+std_pp_LowAcc2 <- vector(mode="list", length=length(persons)) 
+names(std_pp_LowAcc2) <- persons
+
+mean_pp_HighAcc3 <- vector(mode="list", length=length(persons)) 
+names(mean_pp_HighAcc3) <- persons
+mean_pp_LowAcc3 <- vector(mode="list", length=length(persons)) 
+names(mean_pp_LowAcc3) <- persons
+std_pp_HighAcc3 <- vector(mode="list", length=length(persons)) 
+names(std_pp_HighAcc3) <- persons
+std_pp_LowAcc3 <- vector(mode="list", length=length(persons)) 
+names(std_pp_LowAcc3) <- persons
+
+mean_pp_HighAcc4 <- vector(mode="list", length=length(persons)) 
+names(mean_pp_HighAcc4) <- persons
+mean_pp_LowAcc4 <- vector(mode="list", length=length(persons)) 
+names(mean_pp_LowAcc4) <- persons
+std_pp_HighAcc4 <- vector(mode="list", length=length(persons)) 
+names(std_pp_HighAcc4) <- persons
+std_pp_LowAcc4 <- vector(mode="list", length=length(persons)) 
+names(std_pp_LowAcc4) <- persons
+
 for(p in persons) {
   pData <- all_Drive3[(all_Drive3$Subject==as.integer(p) | all_Drive3$Subject==p),]
   pData_act3 <- pData[pData$Activity==3,]
   
+  # Data Partitioning
   pData_seg0 <- pData[pData$Phase==0,]
   pData_seg0_1 <- pData[pData$Activity==0 & pData$Phase==0 & pData$Time > 100 & pData$Time < 200,]
   pData_seg0_2 <- pData[pData$Activity==0 & pData$Phase==0 & pData$Time > 200 & pData$Time < 300,]
@@ -86,6 +181,20 @@ for(p in persons) {
   pData_seg2 <- pData[pData$Phase==2 & pData$Activity==3 & pData$Time < 250,]
   pData_seg3 <- pData[pData$Phase==3 & pData$Activity==3 & pData$Time < 350,]
   pData_seg4 <- pData[pData$Phase==4 & pData$Activity==3,]
+  
+  # pData_HighAcc <- pData[pData$Acceleration >= acc_thresholds[[p]],]
+  # pData_LowAcc <- pData[pData$Acceleration < acc_thresholds[[p]],]
+  pData_HighAcc <- pData[pData$Acc_std >= acc_sd_thresholds[[p]] | pData$Speed_std >= speed_sd_thresholds[[p]],]
+  pData_LowAcc <- pData[pData$Acc_std < acc_sd_thresholds[[p]] & pData$Speed_std < speed_sd_thresholds[[p]],]
+  
+  pData_HighAcc1 <- pData_HighAcc[(pData_HighAcc$Distance < 350),]
+  pData_LowAcc1 <- pData_LowAcc[(pData_LowAcc$Distance < 350),]
+  pData_HighAcc2 <- pData_HighAcc[(pData_HighAcc$Distance >= 350 & pData_HighAcc$Distance < 700),]
+  pData_LowAcc2 <- pData_LowAcc[(pData_LowAcc$Distance >= 350 & pData_LowAcc$Distance < 700),]
+  pData_HighAcc3 <- pData_HighAcc[(pData_HighAcc$Distance >= 700 & pData_HighAcc$Distance < 1050),]
+  pData_LowAcc3 <- pData_LowAcc[(pData_LowAcc$Distance >= 700 & pData_LowAcc$Distance < 1050),]
+  pData_HighAcc4 <- pData_HighAcc[(pData_HighAcc$Distance >= 1050),]
+  pData_LowAcc4 <- pData_LowAcc[(pData_LowAcc$Distance >= 1050),]
   
   mean_pp[[p]] <- mean(pData_act3$ppLogNormalized)
   std_pp[[p]] <- sd(pData$ppLogNormalized)
@@ -113,6 +222,32 @@ for(p in persons) {
   std_pp_seg3[[p]] <- sd(pData_seg3$ppLogNormalized)
   std_pp_seg4[[p]] <- sd(pData_seg4$ppLogNormalized)
   std_pp_max[[p]] <- max(std_pp_seg1[[p]], std_pp_seg2[[p]], std_pp_seg3[[p]], std_pp_seg4[[p]])
+  
+  # Acceleration
+  mean_pp_HighAcc[[p]] <- mean(pData_HighAcc$ppNext)
+  mean_pp_LowAcc[[p]] <- mean(pData_LowAcc$ppNext)
+  std_pp_HighAcc[[p]] <- sd(pData_HighAcc$ppNext)
+  std_pp_LowAcc[[p]] <- sd(pData_LowAcc$ppNext)
+  
+  mean_pp_HighAcc1[[p]] <- mean(pData_HighAcc1$ppNext)
+  mean_pp_LowAcc1[[p]] <- mean(pData_LowAcc1$ppNext)
+  std_pp_HighAcc1[[p]] <- sd(pData_HighAcc1$ppNext)
+  std_pp_LowAcc1[[p]] <- sd(pData_LowAcc1$ppNext)
+  
+  mean_pp_HighAcc2[[p]] <- mean(pData_HighAcc2$ppNext)
+  mean_pp_LowAcc2[[p]] <- mean(pData_LowAcc2$ppNext)
+  std_pp_HighAcc2[[p]] <- sd(pData_HighAcc2$ppNext)
+  std_pp_LowAcc2[[p]] <- sd(pData_LowAcc2$ppNext)
+  
+  mean_pp_HighAcc3[[p]] <- mean(pData_HighAcc3$ppNext)
+  mean_pp_LowAcc3[[p]] <- mean(pData_LowAcc3$ppNext)
+  std_pp_HighAcc3[[p]] <- sd(pData_HighAcc3$ppNext)
+  std_pp_LowAcc3[[p]] <- sd(pData_LowAcc3$ppNext)
+  
+  mean_pp_HighAcc4[[p]] <- mean(pData_HighAcc4$ppNext)
+  mean_pp_LowAcc4[[p]] <- mean(pData_LowAcc4$ppNext)
+  std_pp_HighAcc4[[p]] <- sd(pData_HighAcc4$ppNext)
+  std_pp_LowAcc4[[p]] <- sd(pData_LowAcc4$ppNext)
 }
 
 ```
@@ -216,14 +351,39 @@ dfPP <- as.data.frame(cbind(
                             unlist(std_pp_seg0_1),
                             unlist(std_pp_seg0_2),
                             unlist(std_pp_seg0_3),
-                            unlist(std_pp_seg0_4)
+                            unlist(std_pp_seg0_4),
+                            unlist(mean_pp_HighAcc),
+                            unlist(mean_pp_LowAcc),
+                            unlist(std_pp_HighAcc),
+                            unlist(std_pp_LowAcc),
+                            unlist(mean_pp_HighAcc1),
+                            unlist(mean_pp_LowAcc1),
+                            unlist(std_pp_HighAcc1),
+                            unlist(std_pp_LowAcc1),
+                            unlist(mean_pp_HighAcc2),
+                            unlist(mean_pp_LowAcc2),
+                            unlist(std_pp_HighAcc2),
+                            unlist(std_pp_LowAcc2),
+                            unlist(mean_pp_HighAcc3),
+                            unlist(mean_pp_LowAcc3),
+                            unlist(std_pp_HighAcc3),
+                            unlist(std_pp_LowAcc3),
+                            unlist(mean_pp_HighAcc4),
+                            unlist(mean_pp_LowAcc4),
+                            unlist(std_pp_HighAcc4),
+                            unlist(std_pp_LowAcc4)
                     ))
 
 names(dfPP) <- c("MeanPP", "StdPP", 
                  "MeanPP_Seg0", "MeanPP_Seg1", "MeanPP_Seg2", "MeanPP_Seg3", "MeanPP_Seg4", "MeanPP_SegMax",
                  "StdPP_Seg0", "StdPP_Seg1", "StdPP_Seg2", "StdPP_Seg3", "StdPP_Seg4", "StdPP_SegMax",
                  "MeanPP_Seg0_1", "MeanPP_Seg0_2", "MeanPP_Seg0_3", "MeanPP_Seg0_4",
-                 "StdPP_Seg0_1", "StdPP_Seg0_2", "StdPP_Seg0_3", "StdPP_Seg0_4")
+                 "StdPP_Seg0_1", "StdPP_Seg0_2", "StdPP_Seg0_3", "StdPP_Seg0_4",
+                 "MeanPP_AccHigh", " MeanPP_AccLow", "StdPP_AccHigh", "StdPP_AccLow",
+                 "MeanPP_AccHigh1", " MeanPP_AccLow1", "StdPP_AccHigh1", "StdPP_AccLow1",
+                 "MeanPP_AccHigh2", " MeanPP_AccLow2", "StdPP_AccHigh2", "StdPP_AccLow2",
+                 "MeanPP_AccHigh3", " MeanPP_AccLow3", "StdPP_AccHigh3", "StdPP_AccLow3",
+                 "MeanPP_AccHigh4", " MeanPP_AccLow4", "StdPP_AccHigh4", "StdPP_AccLow4")
 
 behavioralMatrixClustering <- as.matrix(dfPP)
 

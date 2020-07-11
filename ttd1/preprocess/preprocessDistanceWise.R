@@ -124,13 +124,19 @@ processTT1Data <- function(DRIVE_MODE = 1, DIST_PREV = 30, DIST_NEXT = 5, export
 
       # PP of next seconds
       for (i in 1:n) {
+        # Distance wise
         ti <- p_data$Distance[i]
         sfrom <- ti
         sto <- ti + DIST_NEXT
         next_data <- p_data[p_data$Distance >= sfrom & p_data$Distance <= sto, ]
+        
+        # Time wise
+        # tfrom <- p_data$Time[i]
+        # tto <- ti + 5
+        # next_data <- p_data[p_data$Time >= tfrom & p_data$Time <= tto, ]
 
         if (nrow(next_data) > 0) {
-          p_data$ppNext[i] <- calculateMean(next_data$ppLogNormalized)
+          p_data$ppNext[i] <- mean(next_data$ppLogNormalized, na.rm=T)
         }
       }
 
@@ -172,9 +178,9 @@ processTT1Data <- function(DRIVE_MODE = 1, DIST_PREV = 30, DIST_NEXT = 5, export
 }
 
 processTT1DataWithAllDrivingModes <- function() {
-  modes <- c(1, 2, 3, 4)
-  prevDist <- c(30)
-  nextDist <- c(30)
+  modes <- c(2, 3, 4)
+  prevDist <- c(5, 10, 15, 30)
+  nextDist <- c(5, 10, 15, 30)
 
   for (mode in modes) {
     for (ps in prevDist) {

@@ -11,7 +11,6 @@ source('commonFunctions.R')
 ```{r}
 persons <- SELECTED_SUBJECTS
 
-all_Drive2 <- read.csv('..//data/processed/distancewise/TT1_Drive_3_15m_15m.csv')
 all_Drive3 <- read.csv('..//data/processed/distancewise/TT1_Drive_3_15m_15m.csv')
 all_Drive3$Subject <- as.factor(all_Drive3$Subject)
 all_Drive3$logPerspiration <- log(all_Drive3$Perspiration)
@@ -45,7 +44,7 @@ speed_sd_thresholds <- vector(mode="list", length=length(persons))
 names(speed_sd_thresholds) <- persons
 
 for (p in persons) {
-  pData <- all_Drive2[(all_Drive2$Subject==as.integer(p) | all_Drive2$Subject==p),]
+  pData <- all_Drive3[(all_Drive3$Subject==as.integer(p) | all_Drive3$Subject==p),]
   acc_th <- computeThresholdForAcceleration(pData$Acceleration)
   acc_th_sd <- computeThresholdForAcceleration(pData$Acc_std)
   speed_th_sd <- computeThresholdForAcceleration(pData$Speed_std)

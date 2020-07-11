@@ -22,3 +22,12 @@ colorBlue = "#007fff"
 colorRed = "#ff7f7f"
 colorGray = "#cccccc"
 colorGreen = "#11ff00"
+
+# Timing
+TIME_PREV_SECONDS <- 3
+TIME_NEXT_SECONDS <- 3
+
+DISTANCE_PREV <- 15
+DISTANCE_NEXT <- 15
+
+WINDOW_TIME <- 3

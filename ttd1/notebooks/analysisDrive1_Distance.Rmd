@@ -10,8 +10,11 @@ source('commonFunctions.R')
 
 ```{r}
 persons <- SELECTED_SUBJECTS
+drive <- 1
+inputFile <- str_interp('../data/processed/distancewise/TT1_Drive_${drive}_${distPrev}m_${distNext}m.csv', list(drive=drive, distPrev=DISTANCE_PREV, distNext=DISTANCE_NEXT))
+outputFile <- str_interp("../data/processed/analysis/TT1_Drive_${drive}_PP_${distPrev}m_${distNext}m.csv", list(drive=drive, distPrev=DISTANCE_PREV, distNext=DISTANCE_NEXT))
 
-all_Drive1 <- read.csv('..//data/processed/distancewise/TT1_Drive_1_30m_30m.csv')
+all_Drive1 <- read.csv(inputFile)
 all_Drive1$Subject <- as.factor(all_Drive1$Subject)
 all_Drive1$logPerspiration <- log(all_Drive1$Perspiration)
 ```
@@ -189,12 +192,30 @@ legend("topright",
 
 ```{r}
 # Store analysis data
-fPath <- str_interp("../data/processed/analysis/TT1_Drive_1_PP.csv")
 dfx <- dfPP
 dfx <- cbind(persons, dfx)
 names(dfx) <- c("Subject", names(dfPP))
-write.csv(dfx, fPath, row.names = F)
+write.csv(dfx, outputFile, row.names = F)
 ```
 
+## Linear Model
+```{r}
+sampledData <- getSampleSegmentedData(NA, all_Drive1, window=WINDOW_TIME)
+linearModelOnline <- lmer(ppNext ~ 
+              (1 | Subject)
+              + Speed_u
+              + Speed_std
+              + Acc_u
+              + Acc_std
+              + Brake_u
+              + Brake_std
+              + Steering_u
+              + Steering_std, 
+            data=sampledData, REML = T)
 
+# lmer(ppLogNormalized ~ (1 | Subject) + Speed_u + Speed_std + Acc_u + Acc_std + Brake_u + Brake_std + Steering_u + Steering_std + HR + BR, data = pData, REML = T)
 
+# anova(model)
+summary(linearModelOnline)
+plot(linearModelOnline)
+```

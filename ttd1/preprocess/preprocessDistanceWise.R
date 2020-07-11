@@ -91,8 +91,8 @@ processTT1Data <- function(DRIVE_MODE = 1, DIST_PREV = 30, DIST_NEXT = 5, export
       p_data$Acc_std <- rep(NA, n)
 
       # p_data$Braking <- NULL
-      # p_data$Brake_u <- rep(NA, n)
-      # p_data$Brake_std <- rep(NA, n)
+      p_data$Brake_u <- rep(NA, n)
+      p_data$Brake_std <- rep(NA, n)
 
       p_data$Steering_u <- rep(NA, n)
       p_data$Steering_std <- rep(NA, n)
@@ -110,12 +110,12 @@ processTT1Data <- function(DRIVE_MODE = 1, DIST_PREV = 30, DIST_NEXT = 5, export
         if (nrow(prev_data) > 0) {
           p_data$Speed_u[i] <- calculateMean(prev_data$Speed)
           p_data$Acc_u[i] <- calculateMean(prev_data$Acceleration)
-          # p_data$Brake_u[i] <- calculateMean(prev_data$Braking)
+          p_data$Brake_u[i] <- calculateMean(prev_data$Braking)
           p_data$Steering_u[i] <- calculateMean(prev_data$Steering)
 
           p_data$Speed_std[i] <- calculateStd(prev_data$Speed)
           p_data$Acc_std[i] <- calculateStd(prev_data$Acceleration)
-          # p_data$Brake_std[i] <- calculateStd(prev_data$Braking)
+          p_data$Brake_std[i] <- calculateStd(prev_data$Braking)
           p_data$Steering_std[i] <- calculateStd(prev_data$Steering)
         } else {
           print(paste0("Ti=", ti, "; From=", sfrom))
@@ -150,13 +150,13 @@ processTT1Data <- function(DRIVE_MODE = 1, DIST_PREV = 30, DIST_NEXT = 5, export
   if (DRIVE_MODE == 4) {
     all <- all[!is.na(all$Speed_u)
     & !is.na(all$Acc_u)
-    # & !is.na(all$Brake_u)
+    & !is.na(all$Brake_u)
     & !is.na(all$Steering_u)
     & !is.na(all$ppNext), ]
   } else {
     all <- all[!is.na(all$Speed_u) & !is.na(all$Speed_std)
     & !is.na(all$Acc_u) & !is.na(all$Acc_std)
-    # & !is.na(all$Brake_u) & !is.na(all$Brake_std)
+    & !is.na(all$Brake_u) & !is.na(all$Brake_std)
     & !is.na(all$Steering_u) & !is.na(all$Steering_std)
     & !is.na(all$ppNext), ]
   }
@@ -178,9 +178,9 @@ processTT1Data <- function(DRIVE_MODE = 1, DIST_PREV = 30, DIST_NEXT = 5, export
 }
 
 processTT1DataWithAllDrivingModes <- function() {
-  modes <- c(2, 3, 4)
-  prevDist <- c(5, 10, 15, 30)
-  nextDist <- c(5, 10, 15, 30)
+  modes <- c(1, 2, 3, 4)
+  prevDist <- c(15, 30, 45, 60)
+  nextDist <- c(15, 30)
 
   for (mode in modes) {
     for (ps in prevDist) {

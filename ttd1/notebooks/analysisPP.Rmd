@@ -9,10 +9,16 @@ source('commonFunctions.R')
 ```
 
 ```{r}
-drive1 <- read.csv('../data/processed/analysis/TT1_Drive_1_PP.csv')
-drive2 <- read.csv('../data/processed/Analysis/TT1_Drive_2_PP.csv')
-drive3 <- read.csv('../data/processed/Analysis/TT1_Drive_3_PP.csv')
-drive4 <- read.csv('../data/processed/Analysis/TT1_Drive_4_PP.csv', stringsAsFactors = T)
+inputFileDrive1 <- str_interp("../data/processed/analysis/TT1_Drive_${drive}_PP_${distPrev}m_${distNext}m.csv", list(drive=1, distPrev=DISTANCE_PREV, distNext=DISTANCE_NEXT))
+inputFileDrive2 <- str_interp("../data/processed/analysis/TT1_Drive_${drive}_PP_${distPrev}m_${distNext}m.csv", list(drive=2, distPrev=DISTANCE_PREV, distNext=DISTANCE_NEXT))
+inputFileDrive3 <- str_interp("../data/processed/analysis/TT1_Drive_${drive}_PP_${distPrev}m_${distNext}m.csv", list(drive=3, distPrev=DISTANCE_PREV, distNext=DISTANCE_NEXT))
+inputFileDrive4 <- str_interp("../data/processed/analysis/TT1_Drive_${drive}_PP_${distPrev}m_${distNext}m.csv", list(drive=4, distPrev=30, distNext=30))
+
+drive1 <- read.csv(inputFileDrive1)
+drive2 <- read.csv(inputFileDrive2)
+drive3 <- read.csv(inputFileDrive3)
+
+drive4 <- read.csv(inputFileDrive4, stringsAsFactors = T)
 ```
 
 ```{r}
@@ -168,7 +174,6 @@ importantFeaturesDf <- combinedDf %>% select(Subject, Std_PP_3, PP_Dev_2_Turning
 
 # Linear model with all variables
 ```{r}
-combinedDfNoOutlier <- combinedDf[combinedDf$Subject != "#05",]
 linearModel1 <- lm(PP_After ~ 
               + PP_Dev_2_Straight
               + PP_Dev_3_Straight

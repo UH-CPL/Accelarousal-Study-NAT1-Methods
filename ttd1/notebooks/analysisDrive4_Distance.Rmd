@@ -10,8 +10,12 @@ source('commonFunctions.R')
 
 ```{r}
 persons <- SELECTED_SUBJECTS
+drive <- 4
 
-all_Drive4 <- read.csv('../data/processed/distancewise/TT1_Drive_4_30m_30m.csv')
+inputFile <- str_interp('../data/processed/distancewise/TT1_Drive_${drive}_${distPrev}m_${distNext}m.csv', list(drive=drive, distPrev=30, distNext=30))
+outputFile <- str_interp("../data/processed/analysis/TT1_Drive_${drive}_PP_${distPrev}m_${distNext}m.csv", list(drive=drive, distPrev=30, distNext=30))
+
+all_Drive4 <- read.csv(inputFile)
 all_Drive4$Subject <- as.factor(all_Drive4$Subject)
 all_Drive4$logPerspiration <- log(all_Drive4$Perspiration)
 
@@ -353,15 +357,13 @@ legend("topright",
 
 ```{r}
 # Store clustering data
-fPath <- str_interp("../data/processed/analysis/TT1_Drive_4_PP.csv")
 dfx <- clusteringDf
 dfx <- cbind(persons, as.numeric(behavioralDf$PP_before), as.numeric(behavioralDf$PP_u), dfx, dfActivity$ActivityName)
 names(dfx) <- c("Subject", "PP_Prior", "PP_After", "PP_Dev", "Activity")
 
 # Normalize
 dfx <- dfx %>% mutate(PP_Dev_Normalized = ifelse(PP_Prior > 0, PP_After, PP_After - PP_Prior))
-
-write.csv(dfx, fPath, row.names = F)
+write.csv(dfx, outputFile, row.names = F)
 ```
 
 ```{r}
@@ -382,4 +384,24 @@ avg_sil <- sapply(k, silhouette_score)
 plot(k, type='b', avg_sil, xlab='Number of clusters', ylab='Average Silhouette Scores', frame=FALSE)
 ```
 
+## Linear Model
+```{r}
+sampledData <- getSampleSegmentedData(NA, all_Drive4, window=2)
+linearModelOnline <- lmer(ppNext ~ 
+              (1 | Subject)
+              + Speed_u
+              + Speed_std
+              + Acc_u
+              + Acc_std
+              + Brake_u
+              + Brake_std
+              + Steering_u
+              + Steering_std, 
+            data=sampledData, REML = T)
 
+# lmer(ppLogNormalized ~ (1 | Subject) + Speed_u + Speed_std + Acc_u + Acc_std + Brake_u + Brake_std + Steering_u + Steering_std + HR + BR, data = pData, REML = T)
+
+# anova(model)
+summary(linearModelOnline)
+plot(linearModelOnline)
+```

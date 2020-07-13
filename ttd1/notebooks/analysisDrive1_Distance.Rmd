@@ -219,3 +219,10 @@ linearModelOnline <- lmer(ppNext ~
 summary(linearModelOnline)
 plot(linearModelOnline)
 ```
+
+```{r}
+behavioralColumns <- BEHAVIORAL_COLUMNS
+behavioralMatrix <- matrix(nrow = length(persons), ncol = length(behavioralColumns))
+```
+
+

@@ -12,10 +12,16 @@ library(lme4)
 
 ```{r}
 set.seed(43)
-drive1 <- read.csv('../data/processed/analysis/TT1_Drive_1_PP.csv')
-drive2 <- read.csv('../data/processed/Analysis/TT1_Drive_2_PP.csv')
-drive3 <- read.csv('../data/processed/Analysis/TT1_Drive_3_PP.csv')
-drive4 <- read.csv('../data/processed/Analysis/TT1_Drive_4_PP.csv', stringsAsFactors = T)
+inputFileDrive1 <- str_interp("../data/processed/analysis/TT1_Drive_${drive}_PP_${distPrev}m_${distNext}m.csv", list(drive=1, distPrev=DISTANCE_PREV, distNext=DISTANCE_NEXT))
+inputFileDrive2 <- str_interp("../data/processed/analysis/TT1_Drive_${drive}_PP_${distPrev}m_${distNext}m.csv", list(drive=2, distPrev=DISTANCE_PREV, distNext=DISTANCE_NEXT))
+inputFileDrive3 <- str_interp("../data/processed/analysis/TT1_Drive_${drive}_PP_${distPrev}m_${distNext}m.csv", list(drive=3, distPrev=DISTANCE_PREV, distNext=DISTANCE_NEXT))
+inputFileDrive4 <- str_interp("../data/processed/analysis/TT1_Drive_${drive}_PP_${distPrev}m_${distNext}m.csv", list(drive=4, distPrev=30, distNext=30))
+
+drive1 <- read.csv(inputFileDrive1)
+drive2 <- read.csv(inputFileDrive2)
+drive3 <- read.csv(inputFileDrive3)
+
+drive4 <- read.csv(inputFileDrive4, stringsAsFactors = T)
 ```
 
 ```{r}
@@ -147,8 +153,9 @@ plot(linearModel1)
 
 # With Random Effects
 ```{r}
-linearModel1 <- lme(PP_After ~ 
-                Mean_PP_2_AccHigh
+linearModel1 <- lmer(PP_After ~ 
+                (1 | Subject)
+              + Mean_PP_2_AccHigh
               + Mean_PP_2_AccLow
               + Mean_PP_3_AccHigh
               + Mean_PP_3_AccLow
@@ -157,8 +164,7 @@ linearModel1 <- lme(PP_After ~
               + Std_PP_3_AccHigh
               + Std_PP_3_AccLow,
               # + factor(ActivityEncoded),
-              random=~1|factor(Subject),
-            data=combinedDf)
+            data=combinedDf, REML = T)
 
 # anova(model)
 summary(linearModel1)

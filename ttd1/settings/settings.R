@@ -10,6 +10,11 @@ SELECTED_SUBJECTS <- c(
   "22", "24", "29", "30", "31", "32", "41"
 )
 
+BEHAVIORAL_COLUMNS <- c(
+  "Subject", "Speed (u)", "Speed (std.)", "Acc (u)", "Acc (std.)",
+  "Brake (u)", "Brake (std.)", "Steering (u)", "Steering (std.)"
+)
+
 # Plotly
 PLOTLY_USERNAME <- "thuynh32"
 PLOTLY_API_KEY <- "xcSv1yzujDc1IGEwQlr2"

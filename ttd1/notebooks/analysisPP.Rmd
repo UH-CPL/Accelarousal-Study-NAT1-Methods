@@ -72,11 +72,13 @@ COLOR_COGNITIVE <- list(color='rgb(158,202,225)')
 COLOR_MOTORIC <- list(color='rgb(58,200,225)')
 COLOR_FAILURE_PRIOR <- list(color='green')
 COLOR_FAILURE <- list(color='red')
-COLOR_ACC <- list(color="orange")
+COLOR_COGNITIVE_ACC <- list(color='rgb(158,202,225)')
+COLOR_MOTORIC_ACC <- list(color='rgb(58,200,225)')
 
+bargap <- 6
 yAxis <- list(
-  title = 'Perinasal Perspiration (Log)',
-  range=c(-0.3, 0.5)
+  title = "Arousal ΔPP [ln°C²]",
+  range=c(-0.2, 0.6)
 )
 
 # Apply Otsu algorithm to select threshold
@@ -91,46 +93,67 @@ MARKER_LINE_EXTREME = list(color="red")
 ```
 
 ```{r, warning=F}
-fig_NoStressor <- plot_ly(combinedDf_NoStressor, x = ~Subject, y = ~PP_Dev_2_Straight, type = 'bar', name = 'Cognitive - Mean PP (Straight)', marker=COLOR_COGNITIVE) %>%
+xAxis = list(
+  title = "Subject",
+  ticktext = combinedDf_NoStressor$Subject, 
+  tickvals = seq(1, bargap * nrow(combinedDf_NoStressor), by=bargap),
+  tickmode = "array"
+)
+combinedDf_NoStressor$SubjectLevel <- seq(1, bargap * nrow(combinedDf_NoStressor), by=bargap)
+      
+fig_NoStressor <- plot_ly(combinedDf_NoStressor, x = ~SubjectLevel, width=1000) %>%
+  # add_trace(y = ~PP_Dev_2_Straight, name = 'Cognitive - Mean PP (Straight)', marker=COLOR_COGNITIVE) %>%
   # add_trace(y = ~PP_Dev_1_Turning, name = 'Normal - Mean PP (Turning)', marker=COLOR_COGNITIVE) %>% 
-  add_trace(y = ~PP_Dev_2_Turning, name = 'Cognitive - Mean PP (Turning)', marker=COLOR_COGNITIVE) %>% 
-  add_trace(y = ~Mean_PP_2_AccHigh, name = 'Coginitive - Mean PP (High Accel.)', marker=COLOR_ACC) %>% 
-  add_trace(y = ~Mean_PP_2_AccLow, name = 'Coginitive - Mean PP (Low Accel.)', marker=COLOR_ACC) %>% 
+  # add_trace(y = ~PP_Dev_2_Turning, name = 'Cognitive - Mean PP (Turning)', marker=COLOR_COGNITIVE) %>% 
+  add_trace(type="bar", y = ~Mean_PP_2_AccHigh, width=1.58, name = 'ΔPP after HA in CD', marker=COLOR_COGNITIVE_ACC) %>% 
+  # add_trace(y = ~Mean_PP_2_AccLow, name = 'Coginitive - Mean PP (Low Accel.)', marker=COLOR_ACC) %>% 
   
-  add_trace(y = ~PP_Dev_3_Straight, name = 'Motoric - Mean PP (Straight)', marker=COLOR_MOTORIC) %>% 
-  add_trace(y = ~PP_Dev_3_Turning, name = 'Motoric - Mean PP (Turning)', marker=COLOR_MOTORIC) %>% 
-  add_trace(y = ~Mean_PP_3_AccHigh, name = 'Motoric - Mean PP (High Accel.)', marker=COLOR_ACC) %>% 
-  add_trace(y = ~Mean_PP_3_AccLow, name = 'Motoric - Mean PP (Low Accel.)', marker=COLOR_ACC) %>% 
+  # add_trace(y = ~PP_Dev_3_Straight, name = 'Motoric - Mean PP (Straight)', marker=COLOR_MOTORIC) %>% 
+  # add_trace(y = ~PP_Dev_3_Turning, name = 'Motoric - Mean PP (Turning)', marker=COLOR_MOTORIC) %>% 
+  add_trace(type="bar", y = ~Mean_PP_3_AccHigh, width=1.58, name = "ΔPP after HA in MD", marker=COLOR_MOTORIC_ACC) %>% 
+  # add_trace(y = ~Mean_PP_3_AccLow, name = 'Motoric - Mean PP (Low Accel.)', marker=COLOR_ACC) %>%
   
-  add_trace(y = ~PP_Prior, name = 'Failure - Prior PP', marker=COLOR_FAILURE_PRIOR) %>%
-  add_trace(y = ~PP_After, name = 'Failure - PP Deviation', marker=COLOR_FAILURE) %>% 
-  add_segments(x="#01", xend="#41", y = THRESHOLD_MILD, yend = THRESHOLD_MILD, name="Threshold: Mild Change of PP",
+  # add_trace(y = ~PP_Prior, name = 'Failure - Prior PP', marker=COLOR_FAILURE_PRIOR) %>%
+  add_trace(type="bar", y = ~PP_After, width=1.58, name = 'ΔPP after the catastrophic event', marker=COLOR_FAILURE) %>% 
+  add_segments(x=-5, xend=bargap * nrow(combinedDf_NoStressor), y = THRESHOLD_MILD, yend = THRESHOLD_MILD, name="Otsu Threshold",
                            line=list(color="blue", dash = 'dot')) %>%
   # add_segments(x="#01", xend="#41", y = THRESHOLD_EXTREME, yend = THRESHOLD_EXTREME, name="Threshold: Extreme Change of PP",
   #                          line=list(color="darkred", dash = 'dot')) %>%
-  layout(yaxis = yAxis, barmode = 'group', title="No Stressor")
+  layout(yaxis = yAxis, xaxis=xAxis, barmode = 'group', bargap=5, title=F) 
+
+fig_NoStressor <- fig_NoStressor %>% config(mathjax = 'cdn')
 
 htmltools::tagList(fig_NoStressor)
 ```
 
 ```{r, warning=F}
-fig_Cognitive <- plot_ly(combinedDf_Cognitive, x = ~Subject, y = ~PP_Dev_2_Straight, type = 'bar', name = 'Cognitive - Mean PP (Straight)', marker=COLOR_COGNITIVE) %>%
-  add_trace(y = ~PP_Dev_2_Turning, name = 'Cognitive - Mean PP (Turning)', marker=COLOR_COGNITIVE) %>% 
-  add_trace(y = ~Mean_PP_2_AccHigh, name = 'Coginitive - Mean PP (High Accel.)', marker=COLOR_ACC) %>% 
-  add_trace(y = ~Mean_PP_2_AccLow, name = 'Coginitive - Mean PP (Low Accel.)', marker=COLOR_ACC) %>% 
+xAxis = list(
+  title = "Subject",
+  ticktext = combinedDf_Cognitive$Subject, 
+  tickvals = seq(1, bargap * nrow(combinedDf_Cognitive), by=bargap),
+  tickmode = "array"
+)
+combinedDf_Cognitive$SubjectLevel <- seq(1, bargap * nrow(combinedDf_Cognitive), by=bargap)
+
+fig_Cognitive <- plot_ly(combinedDf_Cognitive, x = ~SubjectLevel, width=1000) %>%
+  # add_trace(y = ~PP_Dev_2_Straight, name = 'Cognitive - Mean PP (Straight)', marker=COLOR_COGNITIVE) %>%
+  # add_trace(y = ~PP_Dev_1_Turning, name = 'Normal - Mean PP (Turning)', marker=COLOR_COGNITIVE) %>% 
+  # add_trace(y = ~PP_Dev_2_Turning, name = 'Cognitive - Mean PP (Turning)', marker=COLOR_COGNITIVE) %>% 
+  add_trace(type="bar", y = ~Mean_PP_2_AccHigh, width=1.58, name = 'ΔPP after HA in CD', marker=COLOR_COGNITIVE_ACC) %>% 
+  # add_trace(y = ~Mean_PP_2_AccLow, name = 'Coginitive - Mean PP (Low Accel.)', marker=COLOR_ACC) %>% 
   
-  add_trace(y = ~PP_Dev_3_Straight, name = 'Motoric - Mean PP (Straight)', marker=COLOR_MOTORIC) %>% 
-  add_trace(y = ~PP_Dev_3_Turning, name = 'Motoric - Mean PP (Turning)', marker=COLOR_MOTORIC) %>% 
-  add_trace(y = ~Mean_PP_3_AccHigh, name = 'Motoric - Mean PP (High Accel.)', marker=COLOR_ACC) %>% 
-  add_trace(y = ~Mean_PP_3_AccLow, name = 'Motoric - Mean PP (Low Accel.)', marker=COLOR_ACC) %>% 
+  # add_trace(y = ~PP_Dev_3_Straight, name = 'Motoric - Mean PP (Straight)', marker=COLOR_MOTORIC) %>% 
+  # add_trace(y = ~PP_Dev_3_Turning, name = 'Motoric - Mean PP (Turning)', marker=COLOR_MOTORIC) %>% 
+  add_trace(type="bar", y = ~Mean_PP_3_AccHigh, width=1.58, name = "ΔPP after HA in MD", marker=COLOR_MOTORIC_ACC) %>% 
+  # add_trace(y = ~Mean_PP_3_AccLow, name = 'Motoric - Mean PP (Low Accel.)', marker=COLOR_ACC) %>%
   
-  add_trace(y = ~PP_Prior, name = 'Failure - Prior PP', marker=COLOR_FAILURE_PRIOR) %>%
-  add_trace(y = ~PP_After, name = 'Failure - PP Deviation', marker=COLOR_FAILURE) %>% 
-  add_segments(x="#02", xend="#22", y = THRESHOLD_MILD, yend = THRESHOLD_MILD, name="Threshold: Mild Change of PP",
+  # add_trace(y = ~PP_Prior, name = 'Failure - Prior PP', marker=COLOR_FAILURE_PRIOR) %>%
+  add_trace(type="bar", y = ~PP_After, width=1.58, name = 'ΔPP after the catastrophic event', marker=COLOR_FAILURE) %>% 
+  add_segments(x=-5, xend=bargap * nrow(combinedDf_NoStressor), y = THRESHOLD_MILD, yend = THRESHOLD_MILD, name="Otsu Threshold",
                            line=list(color="blue", dash = 'dot')) %>%
-  # add_segments(x="#02", xend="#22", y = THRESHOLD_EXTREME, yend = THRESHOLD_EXTREME, name="Threshold: Extreme Change of PP",
+  # add_segments(x="#01", xend="#41", y = THRESHOLD_EXTREME, yend = THRESHOLD_EXTREME, name="Threshold: Extreme Change of PP",
   #                          line=list(color="darkred", dash = 'dot')) %>%
-  layout(yaxis = yAxis, barmode = 'group', title="Stressor = Cognitive")
+  layout(yaxis = yAxis, xaxis=xAxis, barmode = 'group', bargap=5, title=F)
 
 htmltools::tagList(fig_Cognitive)
 ```
@@ -138,23 +161,33 @@ htmltools::tagList(fig_Cognitive)
 
 
 ```{r, warning=F}
-fig_Motoric <- plot_ly(combinedDf_Motoric, x = ~Subject, y = ~PP_Dev_2_Straight, type = 'bar', name = 'Arousal in Drive C - Straight segment', marker=COLOR_COGNITIVE, width=870) %>%
-  add_trace(y = ~PP_Dev_2_Turning, name = 'Cognitive - Mean PP (Turning)', marker=COLOR_COGNITIVE) %>% 
-  add_trace(y = ~Mean_PP_2_AccHigh, name = 'Coginitive - Mean PP (High Accel.)', marker=COLOR_ACC) %>% 
-  add_trace(y = ~Mean_PP_2_AccLow, name = 'Coginitive - Mean PP (Low Accel.)', marker=COLOR_ACC) %>% 
+xAxis = list(
+  title = "Subject",
+  ticktext = combinedDf_Motoric$Subject, 
+  tickvals = seq(1, bargap * nrow(combinedDf_Motoric), by=bargap),
+  tickmode = "array"
+)
+combinedDf_Motoric$SubjectLevel <- seq(1, bargap * nrow(combinedDf_Motoric), by=bargap)
+
+fig_Motoric <- plot_ly(combinedDf_Motoric, x = ~SubjectLevel, width=1000) %>%
+  # add_trace(y = ~PP_Dev_2_Straight, name = 'Cognitive - Mean PP (Straight)', marker=COLOR_COGNITIVE) %>%
+  # add_trace(y = ~PP_Dev_1_Turning, name = 'Normal - Mean PP (Turning)', marker=COLOR_COGNITIVE) %>% 
+  # add_trace(y = ~PP_Dev_2_Turning, name = 'Cognitive - Mean PP (Turning)', marker=COLOR_COGNITIVE) %>% 
+  add_trace(type="bar", y = ~Mean_PP_2_AccHigh, width=1.58, name = 'ΔPP after HA in CD', marker=COLOR_COGNITIVE_ACC) %>% 
+  # add_trace(y = ~Mean_PP_2_AccLow, name = 'Coginitive - Mean PP (Low Accel.)', marker=COLOR_ACC) %>% 
   
-  add_trace(y = ~PP_Dev_3_Straight, name = 'Motoric - Mean PP (Straight)', marker=COLOR_MOTORIC) %>% 
-  add_trace(y = ~PP_Dev_3_Turning, name = 'Motoric - Mean PP (Turning)', marker=COLOR_MOTORIC) %>% 
-  add_trace(y = ~Mean_PP_3_AccHigh, name = 'Motoric - Mean PP (High Accel.)', marker=COLOR_ACC) %>% 
-  add_trace(y = ~Mean_PP_3_AccLow, name = 'Motoric - Mean PP (Low Accel.)', marker=COLOR_ACC) %>% 
+  # add_trace(y = ~PP_Dev_3_Straight, name = 'Motoric - Mean PP (Straight)', marker=COLOR_MOTORIC) %>% 
+  # add_trace(y = ~PP_Dev_3_Turning, name = 'Motoric - Mean PP (Turning)', marker=COLOR_MOTORIC) %>% 
+  add_trace(type="bar", y = ~Mean_PP_3_AccHigh, width=1.58, name = "ΔPP after HA in MD", marker=COLOR_MOTORIC_ACC) %>% 
+  # add_trace(y = ~Mean_PP_3_AccLow, name = 'Motoric - Mean PP (Low Accel.)', marker=COLOR_ACC) %>%
   
-  add_trace(y = ~PP_Prior, name = 'Arousal in Drive F - Under prior stressor', marker=COLOR_FAILURE_PRIOR) %>%
-  add_trace(y = ~PP_After, name = 'Arousal in Drive F - Unintended acceleration', marker=COLOR_FAILURE) %>% 
-  add_segments(x="#05", xend="#31", y = THRESHOLD_MILD, yend = THRESHOLD_MILD, name="Threshold",
+  # add_trace(y = ~PP_Prior, name = 'Failure - Prior PP', marker=COLOR_FAILURE_PRIOR) %>%
+  add_trace(type="bar", y = ~PP_After, width=1.58, name = 'ΔPP after the catastrophic event', marker=COLOR_FAILURE) %>% 
+  add_segments(x=-5, xend=bargap * nrow(combinedDf_NoStressor), y = THRESHOLD_MILD, yend = THRESHOLD_MILD, name="Otsu Threshold",
                            line=list(color="blue", dash = 'dot')) %>%
-  # add_segments(x="#05", xend="#31", y = THRESHOLD_EXTREME, yend = THRESHOLD_EXTREME, name="Threshold: Extreme Change of PP",
+  # add_segments(x="#01", xend="#41", y = THRESHOLD_EXTREME, yend = THRESHOLD_EXTREME, name="Threshold: Extreme Change of PP",
   #                          line=list(color="darkred", dash = 'dot')) %>%
-  layout(yaxis = yAxis, barmode = 'group', title="Stressor = Motoric")
+  layout(yaxis = yAxis, xaxis=xAxis, barmode = 'group', bargap=5, title=F)
 
 htmltools::tagList(fig_Motoric)
 ```
@@ -250,8 +283,8 @@ plot(linearModel3)
 ```{r}
 # Export the anova table
 library(xtable)
-lmCoeffs <- summary(linearModel1)$coefficients
-lmAnova <- anova(linearModel1)
+lmCoeffs <- summary(linearModel3)$coefficients
+lmAnova <- anova(linearModel3)
 
 print(xtable(lmCoeffs, digits=c(0,5,5,5,5)))
 print(xtable(lmAnova), digits=c(0,5,5,5,5))
@@ -430,4 +463,18 @@ fig_Importance <- plot_ly(importanceDf, x = ~Feature, y = ~Gain, type = 'bar', n
 htmltools::tagList(fig_Importance)
 ```
 
+```{r}
+actualCluster <- data.frame(cbind(as.character(combinedDf$Subject), selectedDf$Class))
+names(actualCluster) <- c("Subject", "Class")
+actualCluster
+# actualCluster[order(Class),]
+```
+
+```{r}
+clusteringDf <- selectedDf %>% select(importanceDf$Feature[1:4])
+rownames(clusteringDf) <- paste0(combinedDf$Subject)
+fit <- kmeans(clusteringDf, 3)
+clusplot(clusteringDf, fit$cluster, color=TRUE, shade=TRUE,
+   labels=2, lines=0)
+```
 

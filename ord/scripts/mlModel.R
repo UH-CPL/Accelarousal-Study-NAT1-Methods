@@ -72,12 +72,21 @@ if (ML_USE_CLUSTER) {
   all$Cluster <- as.factor(all$Cluster)
 }
 
+# Important Features
+importantFeaturesDfs = vector(mode="list", length = length(persons))
+names(importantFeaturesDfs) <- persons
+
 # Train
 trainAndTestModel <- function(p, all, idx = 1, useData = "All", useCluster = F) {
-  if (!is.na(p) && idx > 0) {
-    pData <- getSampleSegmentedData(p, all, window = 3)
+  if (p %in% c("01", "04", "08", "10")) {
+    window <- ifelse(p == "10", 2.3, 1.7)
   } else {
-    pData <- getSampleSegmentedData(NA, all, window = 3)
+    window <- 1
+  }
+  if (!is.na(p) && idx > 0) {
+    pData <- getSampleSegmentedData(p, all, window = window)
+  } else {
+    pData <- getSampleSegmentedData(NA, all, window = window)
   }
 
   pData <- pData[!is.na(pData$ppNext), ]
@@ -149,8 +158,7 @@ trainAndTestModel <- function(p, all, idx = 1, useData = "All", useCluster = F) 
     gamma = 0.8,
     min_child_weight = 3,
     subsample = 1,
-    colsample_bytree = 1,
-    stratified = T
+    colsample_bytree = 1
   )
   posScale <- (nLow/nHigh)^2
   if (posScale < 1) {
@@ -174,6 +182,27 @@ trainAndTestModel <- function(p, all, idx = 1, useData = "All", useCluster = F) 
       stratified = T
     )
     aucs <- c(aucs, as.numeric(xgb_m$evaluation_log[xgb_m$best_iteration, "test_auc_mean"]))
+    
+    # Feature Important
+    bst <- xgboost(
+      params = param,
+      data = as.matrix(pSelected %>% select(-clsPP)),
+      label = pSelected$clsPP,
+      nrounds = 500,
+      verbose = F,
+      prediction = T,
+      maximize = T,
+      nfold = nFolds,
+      metrics = "auc",
+      early_stopping_rounds = 100,
+      scale_pos_weight = posScale,
+      stratified = T
+    )
+    cols <- colnames(pSelected %>% select(-clsPP))
+    print(cols)
+    importantFeaturesDf <- xgb.importance(cols, model = bst)
+    drawFeatureImportantPlot(importantFeaturesDf)
+    # print(importantFeaturesDf)
   }
   
   # Prediction
@@ -262,3 +291,5 @@ ftable_perf
 
 # Write perf to csv file
 write.csv(perfDf, str_interp("./outputs/mlperf/perf_Prev_${tPre}s_Next_${tNext}s.csv", list(tPre = TIME_PREV_SECONDS, tNext = TIME_NEXT_SECONDS)))
+xtable(perfDf)
+

@@ -300,11 +300,12 @@ thresholdPPAfter <- otsu(ppAfterArray, range=c(min(ppAfter), max(ppAfter))) # Ex
 print(paste0('Threshold: ', thresholdPPAfter))
 
 selectedDf <- combinedDf %>% select(
-                  "Subject", "Activity", "PP_After", "PP_Prior",
+                  "Subject", "Activity", "PP_After", # "PP_Prior",
                   "Mean_PP_2_AccHigh", "Mean_PP_3_AccHigh",
                   "Mean_PP_2_AccLow", "Mean_PP_3_AccLow",
-                  "Std_PP_2_AccHigh", "Std_PP_3_AccHigh",
-                  "Std_PP_2_AccLow", "Std_PP_3_AccLow")
+                  # "Std_PP_2_AccHigh", "Std_PP_3_AccHigh",
+                  # "Std_PP_2_AccLow", "Std_PP_3_AccLow"
+                  )
 
 selectedDf$Subject <- NULL
 selectedDf$Activity_NO <- ifelse(selectedDf$Activity == "NO", 1, 0)
@@ -337,7 +338,7 @@ print(names(selectedDf))
 ```
 
 ```{r}
-set.seed(43)
+set.seed(39)
 n_folds <- 3
 params <- param <- list(objective       = "binary:logistic", 
                booster          = "gbtree",
@@ -450,7 +451,7 @@ yAxis <- list(
   range=c(0.0, 1.0)
 )
 xAxis <- list(
-  title = ''
+  title = 'Feature'
 )
 
 importanceDf$Feature <- factor(importanceDf$Feature, levels = importanceDf[order(-Gain),]$Feature)
@@ -471,10 +472,79 @@ actualCluster
 ```
 
 ```{r}
-clusteringDf <- selectedDf %>% select(importanceDf$Feature[1:4])
+library(factoextra)
+library(cluster)
+clusteringDf <- combinedDf %>% select("Mean_PP_2_AccHigh", "Mean_PP_3_AccHigh") #(importanceDf$Feature[1:3])
+rownames(selectedDf) <- paste0(combinedDf$Subject)
 rownames(clusteringDf) <- paste0(combinedDf$Subject)
 fit <- kmeans(clusteringDf, 3)
-clusplot(clusteringDf, fit$cluster, color=TRUE, shade=TRUE,
-   labels=2, lines=0)
+# clusplot(clusteringDf, fit$cluster, color=TRUE, shade=TRUE, labels=2, lines=0)
+fviz_cluster(fit, data=selectedDf)
 ```
 
+
+```{r}
+library(dendextend)
+
+NUMBER_OF_CLUSTERS = 4
+CLUSTER_COLORS <- c("red", "blue", color_darkpink, color_darkpink)
+
+color_darkpink = "#e75480"
+CLUSTER_BRANCH_COLORS <- CLUSTER_COLORS[1:NUMBER_OF_CLUSTERS]
+CLUSTER_LABEL_COLORS <- CLUSTER_COLORS[1:NUMBER_OF_CLUSTERS]
+
+behavioralMatrixClustering <- as.matrix(clusteringDf)
+rownames(behavioralMatrixClustering) <- paste0(combinedDf$Subject)
+distMatrix <- dist(behavioralMatrixClustering, method="manhattan")
+hresults <- distMatrix %>% hclust(method="complete")
+
+hc <- hresults %>% 
+      as.dendrogram %>%
+      set("nodes_cex", NUMBER_OF_CLUSTERS) %>%
+      set("labels_col", value = CLUSTER_LABEL_COLORS, k=NUMBER_OF_CLUSTERS) %>%
+      # set("leaves_pch", 19) %>%
+      # set("leaves_col", value = c("gray"), k=NUMBER_OF_CLUSTERS) %>%    
+      set("branches_k_color", value=CLUSTER_BRANCH_COLORS, k=NUMBER_OF_CLUSTERS)
+
+plot(hc)
+legend("topright", 
+     title="Drive=Failure \nChange of Arousal",
+     legend = c("Exceptional Increase" , "Noticable Increase" , "No-change or Decrease"), 
+     col = c("red", "pink" , "blue"),
+     pch = c(20,20,20), bty = "n",  pt.cex = 1.5, cex = 0.8 , 
+     text.col = "black", horiz = FALSE, inset = c(0.0, 0.1))
+```
+
+```{r}
+NUMBER_OF_CLUSTERS <- 2
+CLUSTER_COLORS <- c("red", "blue", color_darkpink, color_darkpink)
+
+color_darkpink = "#e75480"
+CLUSTER_BRANCH_COLORS <- CLUSTER_COLORS[1:NUMBER_OF_CLUSTERS]
+CLUSTER_LABEL_COLORS <- CLUSTER_COLORS[1:NUMBER_OF_CLUSTERS]
+
+combinedDf$isM <- ifelse(combinedDf$Activity == "M", 0.1, 0)
+combinedDf$isC <- ifelse(combinedDf$Activity == "C", 0.1, 0)
+combinedDf$isN <- ifelse(combinedDf$Activity == "NO", 0.1, 0)
+
+behavioralMatrixClustering <- as.matrix(combinedDf %>% select("PP_After", "isM", "isC", "isN"))
+rownames(behavioralMatrixClustering) <- paste0(combinedDf$Subject)
+distMatrix <- dist(behavioralMatrixClustering, method="manhattan")
+hresults <- distMatrix %>% hclust(method="complete")
+
+hc <- hresults %>% 
+      as.dendrogram %>%
+      set("nodes_cex", NUMBER_OF_CLUSTERS) %>%
+      set("labels_col", value = CLUSTER_LABEL_COLORS, k=NUMBER_OF_CLUSTERS) %>%
+      # set("leaves_pch", 19) %>%
+      # set("leaves_col", value = c("gray"), k=NUMBER_OF_CLUSTERS) %>%    
+      set("branches_k_color", value=CLUSTER_BRANCH_COLORS, k=NUMBER_OF_CLUSTERS)
+
+plot(hc)
+legend("topright", 
+     title="Drive=Failure \nChange of Arousal",
+     legend = c("Exceptional Increase" , "Noticable Increase" , "No-change or Decrease"), 
+     col = c("red", "pink" , "blue"),
+     pch = c(20,20,20), bty = "n",  pt.cex = 1.5, cex = 0.8 , 
+     text.col = "black", horiz = FALSE, inset = c(0.0, 0.1))
+```

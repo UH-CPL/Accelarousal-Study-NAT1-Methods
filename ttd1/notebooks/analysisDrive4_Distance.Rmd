@@ -59,8 +59,8 @@ names(pp_baseline) <- persons
 
 # Number of peaks
 
-PREV_DISTANCE = 300
-TRACKING_DISTANCE = 60
+PREV_DISTANCE = 600 # 300
+TRACKING_DISTANCE = 100
 DRIVE_MODE = 4
 ```
 
@@ -103,14 +103,14 @@ COLOR_BRAKE = "#888888"
 
 y1 <- list(
   tickfont = list(color = COLOR_ACC),
-  title="Degree",
+  title="% or °",
   range=c(0, 100)
 )
 y2 <- list(
   tickfont = list(color = COLOR_PP),
   overlaying = "y",
   side = "right",
-  title = "Log Perspiration",
+  title = "Perspiration [ln °C²]",
   showgrid = FALSE,
   range=c(min(all_Drive4$ppLogNormalized), max(all_Drive4$ppLogNormalized))
 )
@@ -149,26 +149,26 @@ for (p in persons) {
   ppMeanBefore <- mean(pDataBefore$ppLogNormalized)
   ppMeanAfter <- mean(pDataAfter$ppLogNormalized)
   
-  dir.create(file.path('../figures/drive/', paste0('Drive_', DRIVE_MODE)), showWarnings = FALSE)
-  fname <- str_interp('../figures/drive/Drive_${drive}/P${person}.svg', list(drive=DRIVE_MODE, person=p)) 
+  # dir.create(file.path('../figures/drive/', paste0('Drive_', DRIVE_MODE)), showWarnings = FALSE)
+  fname <- str_interp('../plots/drive/Drive_${drive}/P${person}.png', list(drive=DRIVE_MODE, person=p)) 
   
   pData <- pData[pData$Distance >= from_time,]
   plot_Acc <- plot_ly(pData, x = ~Distance, height=400, width=900) %>%
               add_trace(name="Acceleration", y = ~Acceleration, type = 'scatter', mode = 'lines', line=list(width=1.5, color=COLOR_ACC)) %>% 
               add_trace(name="Brake", y = ~Braking, type = 'scatter', mode = 'lines', line=list(width=1.5, color=COLOR_BRAKE)) %>%
-              add_trace(name="PP", y = ~ppLogNormalized, type = 'scatter', mode = 'lines', line=list(width=1.5, color=COLOR_PP), yaxis = "y2") %>% 
+              add_trace(name="Perspiration", y = ~ppLogNormalized, type = 'scatter', mode = 'lines', line=list(width=1.5, color=COLOR_PP), yaxis = "y2") %>% 
               add_segments(x = min(pData$Distance), xend = max(pData$Distance), y = ppMeanBefore, yend = ppMeanBefore, 
-                           yaxis = "y2", name="Mean PP (Before Incident)",
+                           yaxis = "y2", name="Mean of Perspiration before the incident",
                            line=list(color=COLOR_PP, dash = 'dot')) %>%
               add_segments(x = min(pData$Distance), xend = max(pData$Distance), y = ppMeanAfter, yend = ppMeanAfter, 
-                           yaxis = "y2", name="Mean PP (After Incident)",
+                           yaxis = "y2", name="Mean of Perspiration after the incident",
                            line=list(color="darkred", dash = 'dot')) %>%
               # add_segments(x = min(pData$Distance) - 0.1, xend = max(pData$Distance), y = pp_baseline[[p]], yend = pp_baseline[[p]], 
               #              yaxis = "y2", name="Baseline PP (from Drive 1)",
               #              line=list(color="blue", dash = 'dot')) %>%
     
               layout(
-                title=paste0("Subject #", p, " (Stressor=", activity_names[[p]], ")"), 
+                title=paste0("Stressor=", activity_names[[p]], ""), 
                 xaxis=list(title="Distance [m]", range=c(0)), 
                 yaxis=y1, 
                 yaxis2=y2, 
@@ -193,7 +193,7 @@ for (p in persons) {
                 autosize = F
               )
   
-  # orca(plot_PP, fname)
+  orca(plot_Acc, fname)
   idx <- idx + 1
   plt_AllAcc[[p]] <- plot_Acc
 }

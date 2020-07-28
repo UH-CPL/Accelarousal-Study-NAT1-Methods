@@ -199,9 +199,10 @@ print(paste0('Threshold: ', thresholdPPAfter))
 selectedDf <- combinedDf %>% select(
                   "Subject", "Activity", "PP_After", # "PP_Prior",
                   "Mean_PP_2_AccHigh", "Mean_PP_3_AccHigh",
-                  "Mean_PP_2_AccLow", "Mean_PP_3_AccLow",
-                  "Std_PP_2_AccHigh", "Std_PP_3_AccHigh",
-                  "Std_PP_2_AccLow", "Std_PP_3_AccLow")
+                  "Mean_PP_2_AccLow", "Mean_PP_3_AccLow"
+                  # "Std_PP_2_AccHigh", "Std_PP_3_AccHigh",
+                  # "Std_PP_2_AccLow", "Std_PP_3_AccLow"
+                  )
 
 selectedDf$Subject <- NULL
 selectedDf$Activity_NO <- ifelse(selectedDf$Activity == "NO", 1, 0)

@@ -336,3 +336,22 @@ exportFormatTable <- function(f, file, width = "100%", height = NULL,
     delay = delay
   )
 }
+
+# Draw plot for important figure
+drawFeatureImportantPlot <- function(importanceDf) {
+  yAxis <- list(
+    title = 'Importance',
+    range=c(0.0, 1.0)
+  )
+  xAxis <- list(
+    title = 'Feature'
+  )
+  
+  importanceDf$Feature <- factor(importanceDf$Feature, levels = importanceDf[order(-Gain),]$Feature)
+  fig_Importance <- plot_ly(importanceDf, x = ~Feature, y = ~Gain, type = 'bar', name = 'Gain', width=600) %>%
+    add_trace(y = ~Cover, name = 'Cover') %>% 
+    add_trace(y = ~Frequency, name = 'Frequency') %>% 
+    layout(yaxis = yAxis, xaxis=xAxis, barmode = 'group', title="Feature Importance") %>% 
+    config(.Last.value, mathjax = 'cdn')
+  orca(fig_Importance, file=paste0("./plots/importance/", p, ".png"))
+}

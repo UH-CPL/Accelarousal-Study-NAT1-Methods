@@ -9,23 +9,46 @@ BEHAVIORAL_COLUMNS <- c(
   "Subject", "Speed (u)", "Speed (std.)", "Acc (u)", "Acc (std.)",
   "Brake (u)", "Brake (std.)", "Steering (u)", "Steering (std.)"
 )
-CORRELATION_NAMES <- c(TeX("$\\mu_{Speed}$"), TeX("$\\sigma_{Speed}$"),
-                       TeX("$\\mu_{Accel.}$"), TeX("$\\sigma_{Accel.}$"),
-                       TeX("$\\mu_{Brake}$"), TeX("$\\sigma_{Brake}$"),
-                       TeX("$\\mu_{Steering}$"), TeX("$\\sigma_{Steering}$"),
-                       TeX("$\\textbf{_{Arousal}}$"))
-LINEAR_MODEL_VARIABLES_LATEX <- c("$\\mu_{Speed}$", "$\\sigma_{Speed}$",
-                                  "$\\mu_{Accel.}$", "$\\sigma_{Accel.}$",
-                                  "$\\mu_{Brake}$", "$\\sigma_{Brake}$",
-                                  "$\\mu_{Steering}$", "$\\sigma_{Steering}$")
+CORRELATION_NAMES <- c(TeX("$\\bar{x}_{Speed}$"), TeX("$\\s_{Speed}$"),
+                          TeX("$\\bar{x}_{Accel.}$"), TeX("$\\s_{Accel.}$"),
+                          TeX("$\\bar{x}_{Brake}$"), TeX("$\\s_{Brake}$"),
+                          TeX("$\\bar{x}_{Steering}$"), TeX("$\\s_{Steering}$"),
+                          TeX("$\\textbf{_{Arousal}}$"))
+
+CORRELATION_NAMES_PP <- c(TeX("$\\bar{x}_{Speed}$"), TeX("$\\s_{Speed}$"),
+                          TeX("$\\bar{x}_{Accel.}$"), TeX("$\\s_{Accel.}$"),
+                          TeX("$\\bar{x}_{Brake}$"), TeX("$\\s_{Brake}$"),
+                          TeX("$\\bar{x}_{Steering}$"), TeX("$\\s_{Steering}$"),
+                          TeX("$\\textbf{_{Arousal}}$"))
+
+CORRELATION_NAMES_HR <- c(TeX("$\\bar{x}_{Speed}$"), TeX("$\\s_{Speed}$"),
+                          TeX("$\\bar{x}_{Accel.}$"), TeX("$\\s_{Accel.}$"),
+                          TeX("$\\bar{x}_{Brake}$"), TeX("$\\s_{Brake}$"),
+                          TeX("$\\bar{x}_{Steering}$"), TeX("$\\s_{Steering}$"),
+                          TeX("$\\textbf{_{HR}}$"))
+
+CORRELATION_NAMES_BR <- c(TeX("$\\bar{x}_{Speed}$"), TeX("$\\s_{Speed}$"),
+                          TeX("$\\bar{x}_{Accel.}$"), TeX("$\\s_{Accel.}$"),
+                          TeX("$\\bar{x}_{Brake}$"), TeX("$\\s_{Brake}$"),
+                          TeX("$\\bar{x}_{Steering}$"), TeX("$\\s_{Steering}$"),
+                          TeX("$\\textbf{_{BR}}$"))
+
+
+LINEAR_MODEL_VARIABLES_LATEX <- c("$\\bar{x}_{Speed}$", "$\\s_{Speed}$",
+                                  "$\\bar{x}_{Accel.}$", "$\\s_{Accel.}$",
+                                  "$\\bar{x}_{Brake}$", "$\\s_{Brake}$",
+                                  "$\\bar{x}_{Steering}$", "$\\s_{Steering}$")
 
 # Time-series Prediction
 GROUP_THRESHOLD <- 0.20
-TIME_PREV_SECONDS <- 5
+TIME_PREV_SECONDS <- 20
 TIME_NEXT_SECONDS <- 5
 
+# Response
+RESPONSE_VAR <- "ppNext" # Accept: "ppNext" "HRNext", "BRNext"
+
 # Clustering
-CLUSTER_THRESHOLDS <- list("3"=1, "5"=1, "10"=1.05, "15"=1.10, "30"=1.15)
+CLUSTER_THRESHOLDS <- list("3"=0.9, "5"=0.90, "10"=0.95, "15"=1.00, "30"=1.10)
 CLUSTER_THRESHOLD <- as.double(CLUSTER_THRESHOLDS[as.character(TIME_PREV_SECONDS)][1])
 NUMBER_OF_CLUSTERS <- 2
 CLUSTER_BRANCH_COLORS <- c("red", "blue", "#999999")

@@ -32,11 +32,17 @@ if (DEBUG_MODE) {
 ###################### CORRELATION #####################################
 behavioralColumns <- BEHAVIORAL_COLUMNS
 behavioralMatrix <- matrix(nrow = length(persons), ncol = length(behavioralColumns))
+behavioralMatrixWithPValue <- matrix(nrow = length(persons), ncol = length(behavioralColumns))
 
 ###################### 1. Correlation of all Subjects ###################
 computeAndPlotCorrelationOfAllSubjects(all, window=TIME_PREV_SECONDS, skipPlot = F, savePlot=T)
 
 ###################### 2. Correlation of each Subject ####################
 for (p in persons) {
-  computeAndPlotCorrelation(p, all, behavioralMatrix, window=TIME_PREV_SECONDS, rowNo = match(p, persons), skipPlot = F, savePlot=T)
+  computeAndPlotCorrelation(p, all, behavioralMatrix, behavioralMatrixWithPValue, response=RESPONSE_VAR, window=TIME_PREV_SECONDS, rowNo = match(p, persons), skipPlot = F, savePlot=T)
 }
+
+print(behavioralMatrixWithPValue)
+
+
+

@@ -46,7 +46,7 @@ for (p in persons) {
 layout(matrix(c(1, 2, 3, 4), 2, 2))
 
 ### 1. Linear model for all subjects
-linearModel_AllSubjects <- plotLinearModelForAllSubjects(all, usePhysiological = F, removeIncompletedSubject = F)
+linearModel_AllSubjects <- plotLinearModelForAllSubjects(all, window = TIME_NEXT_SECONDS, usePhysiological = F, removeIncompletedSubject = F)
 plot(linearModel_AllSubjects,
   main = str_interp("Linear Model (Previous ${tPre}s, Next ${tNext}s)", list(tPre = TIME_PREV_SECONDS, tNext = TIME_NEXT_SECONDS)),
   ylab = "Residual",
@@ -81,5 +81,5 @@ sink()
 
 ### 2. Linear model for each subject
 for (p in persons) {
-  plotLinearModel(p, all, usePhysiological = F)
+  plotLinearModel(p, all, window = TIME_PREV_SECONDS, usePhysiological = F)
 }

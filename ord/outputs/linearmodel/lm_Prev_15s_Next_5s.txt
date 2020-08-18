@@ -1,41 +1,36 @@
 Linear mixed model fit by REML. t-tests use Satterthwaite's method ['lmerModLmerTest']
-Formula: ppLogNormalized ~ (1 | Subject) + Speed_u + Speed_std + Acc_u +  
-    Acc_std + Brake_u + Brake_std + Steering_u + Steering_std
+Formula: ppLogNormalized ~ (1 | Subject) + Speed_u + Speed_std + Acc_u +      Acc_std + Steering_u + Steering_std
    Data: pData
 
-REML criterion at convergence: -1428.1
+REML criterion at convergence: -1427.9
 
 Scaled residuals: 
     Min      1Q  Median      3Q     Max 
--8.0602 -0.4278  0.0585  0.5194  3.9859 
+-8.1519 -0.4420  0.0578  0.5378  3.9821 
 
 Random effects:
  Groups   Name        Variance Std.Dev.
- Subject  (Intercept) 0.02545  0.1595  
- Residual             0.02538  0.1593  
+ Subject  (Intercept) 0.02525  0.1589  
+ Residual             0.02571  0.1603  
 Number of obs: 1886, groups:  Subject, 8
 
 Fixed effects:
-               Estimate Std. Error         df t value Pr(>|t|)    
-(Intercept)   2.369e-01  6.443e-02  1.182e+01   3.676  0.00325 ** 
-Speed_u      -6.690e-05  1.803e-04  1.870e+03  -0.371  0.71069    
-Speed_std     1.804e-03  8.263e-04  1.870e+03   2.183  0.02917 *  
-Acc_u        -2.542e-04  9.094e-04  1.871e+03  -0.280  0.77989    
-Acc_std       2.104e-03  1.548e-03  1.871e+03   1.360  0.17413    
-Brake_u      -3.005e-03  5.918e-04  1.872e+03  -5.077 4.21e-07 ***
-Brake_std     1.068e-03  8.540e-04  1.870e+03   1.250  0.21142    
-Steering_u    2.639e-04  1.834e-04  1.871e+03   1.439  0.15024    
-Steering_std  3.601e-05  1.916e-04  1.870e+03   0.188  0.85099    
+              Estimate Std. Error        df t value Pr(>|t|)    
+(Intercept)  1.231e-01  5.874e-02 8.299e+00   2.096  0.06815 .  
+Speed_u      4.401e-04  1.511e-04 1.873e+03   2.913  0.00362 ** 
+Speed_std    6.230e-04  7.085e-04 1.872e+03   0.879  0.37935    
+Acc_u        1.991e-03  6.502e-04 1.872e+03   3.061  0.00223 ** 
+Acc_std      4.832e-03  1.236e-03 1.873e+03   3.909 9.58e-05 ***
+Steering_u   2.063e-04  1.842e-04 1.873e+03   1.120  0.26288    
+Steering_std 2.037e-04  1.887e-04 1.872e+03   1.079  0.28055    
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 Correlation of Fixed Effects:
-            (Intr) Speed_ Spd_st Acc_u  Acc_st Brake_ Brk_st Sterng_
-Speed_u     -0.182                                                  
-Speed_std    0.149  0.027                                           
-Acc_u       -0.429  0.007 -0.425                                    
-Acc_std      0.002  0.083  0.017 -0.248                             
-Brake_u     -0.351  0.554 -0.289  0.495  0.339                      
-Brake_std   -0.115 -0.121 -0.359  0.373 -0.570 -0.230               
-Steering_u   0.081 -0.028 -0.077 -0.088 -0.109 -0.062  0.019        
-Steerng_std  0.005  0.283 -0.126 -0.113 -0.002  0.170 -0.151  0.360 
+            (Intr) Speed_ Spd_st Acc_u  Acc_st Sterng_
+Speed_u      0.018                                    
+Speed_std   -0.052  0.267                             
+Acc_u       -0.240 -0.456 -0.105                      
+Acc_std      0.026 -0.153 -0.156 -0.289               
+Steering_u   0.067  0.008 -0.110 -0.085 -0.108        
+Steerng_std  0.047  0.233 -0.153 -0.202 -0.152  0.380 

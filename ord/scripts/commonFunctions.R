@@ -38,6 +38,12 @@ calculateStd <- function(l) {
   return(sd(l))
 }
 
+getResponseAbbr <- function(s) {
+  if (s == "ppNext") { return("PP") }
+  if (s == "HRNext") { return("HR") }
+  if (s == "BRNext") { return("BR") }
+}
+
 ############## 2. Data Loading, Processing ########################
 # Load processed data
 # @param persons: list of subject IDs
@@ -108,6 +114,8 @@ processTemporalData <- function(all, persons, timePrevSeconds = 30, timeNextSeco
       p_data$Steering_std <- rep(NA, n)
 
       p_data$ppNext <- rep(NA, n)
+      p_data$HRNext <- rep(NA, n)
+      p_data$BRNext <- rep(NA, n)
 
       # Driving stat info of prev seconds
       for (i in timePrevSeconds:n) {
@@ -129,6 +137,8 @@ processTemporalData <- function(all, persons, timePrevSeconds = 30, timeNextSeco
         sfrom <- i + 1
         sto <- i + timeNextSeconds
         p_data$ppNext[i] <- calculateMean(p_data$ppLogNormalized[sfrom:sto])
+        p_data$HRNext[i] <- calculateMean(p_data$HR[sfrom:sto])
+        p_data$BRNext[i] <- calculateMean(p_data$BR[sfrom:sto])
       }
       all <- rbind(all, p_data)
     }
@@ -157,6 +167,34 @@ getSampleSegmentedData <- function(p, all, window=5) {
   }
 }
 
+getSignificanceDenote <- function(v, accept0.1=F) {
+  if (v <= 0.001) {
+    return("***");
+  } else if (v <= 0.01) {
+    return("**");
+  } else if (v <= 0.05) {
+    return("*")
+  } else if (v <= 0.1 && accept0.1) {
+    return('.')
+  } else {
+    return('')
+  }
+}
+
+isSignificant <- function(s, type="string") {
+  if (type == "string") {
+    r <- (str_count(as.character(s), "\\*") >=2)
+    return(r)
+  } else {
+    return(s <= 0.01)
+  }
+}
+
+getValue <- function(s) {
+  s <- as.character(s)
+  return(as.numeric(gsub("[\\* ]", "", s)))
+}
+
 ################ 3. Correllation #########################
 # Compute and draw correlation matrix of a subject
 # @param p: subject ID
@@ -165,29 +203,53 @@ getSampleSegmentedData <- function(p, all, window=5) {
 # @param rowNo: subject index
 # @param skipPlot: disable plotting function
 # @returns: void
-computeAndPlotCorrelation <- function(p, all, behavioralMatrix, window=5, rowNo = 1, skipPlot=F, savePlot=F) {
+computeAndPlotCorrelation <- function(p, all, behavioralMatrix, behavioralMatrixWithPValue, response="ppNext", window=5, rowNo = 1, skipPlot=F, savePlot=F) {
   # Sample data
   pData <- getSampleSegmentedData(p, all, window)
   
   # Correlation
-  pCorrData <- pData %>% select(
-    ppNext,
-    Speed_u, Speed_std,
-    Acc_u, Acc_std, 
-    Brake_u, Brake_std, 
-    Steering_u, Steering_std
-  )
-  pCorrData$PP <- pCorrData$ppNext
-  pCorrData$ppNext <- NULL
-
-  pCorrData <- pCorrData[!is.na(pCorrData$PP), ]
+  if (response=="ppNext") {
+    pCorrData <- pData %>% select(ppNext, 
+                                  Speed_u, Speed_std,
+                                  Acc_u, Acc_std, 
+                                  Brake_u, Brake_std, 
+                                  Steering_u, Steering_std)
+    pCorrData$PP <- pCorrData$ppNext
+    pCorrData$ppNext <- NULL
+    pCorrData <- pCorrData[!is.na(pCorrData$PP), ]
+    corNames <- CORRELATION_NAMES
+  }
+  if (response=="HRNext") {
+    pCorrData <- pData %>% select(Speed_u, Speed_std,
+                                  Acc_u, Acc_std, 
+                                  Brake_u, Brake_std,
+                                  Steering_u, Steering_std, 
+                                  HRNext)
+    pCorrData <- pCorrData[!is.na(pCorrData$HRNext), ]
+    corNames <- CORRELATION_NAMES_HR
+  }
+  if (response=="BRNext") {
+    pCorrData <- pData %>% select(Speed_u, Speed_std,
+                                  Acc_u, Acc_std, 
+                                  Brake_u, Brake_std,
+                                  Steering_u, Steering_std, 
+                                  BRNext)
+    pCorrData <- pCorrData[!is.na(pCorrData$BRNext), ]
+    corNames <- CORRELATION_NAMES_BR
+  }
 
   col <- rev(brewer.pal(n = 10, name = "RdBu"))
+  # Correlation
   corMatrix <- cor(pCorrData)
+  # Significant test
+  pTest <- cor.mtest(pCorrData, conf.level = .95)
+  
   # Store to behavioral matrix
   rowCorPP <- corMatrix[nrow(corMatrix), ]
+  rowPValue <- pTest$p[nrow(corMatrix), ]
+  
   behavioralMatrix[rowNo, ] <<- c(
-    paste0("Subject #", p),
+    paste0("S", p),
     round(rowCorPP[["Speed_u"]], digits = 3),
     round(rowCorPP[["Speed_std"]], digits = 3),
     round(rowCorPP[["Acc_u"]], digits = 3),
@@ -197,18 +259,36 @@ computeAndPlotCorrelation <- function(p, all, behavioralMatrix, window=5, rowNo 
     round(rowCorPP[["Steering_u"]], digits = 3),
     round(rowCorPP[["Steering_std"]], digits = 3)
   )
+  behavioralMatrixWithPValue[rowNo, ]  <<- c(
+    paste0("S", p),
+    paste0(round(rowCorPP[["Speed_u"]], digits = 3), getSignificanceDenote(round(rowPValue[[1]], digits = 3))),
+    paste0(round(rowCorPP[["Speed_std"]], digits = 3), getSignificanceDenote(round(rowPValue[[2]], digits = 3))),
+    paste0(round(rowCorPP[["Acc_u"]], digits = 3), getSignificanceDenote(round(rowPValue[[3]], digits = 3))),
+    paste0(round(rowCorPP[["Acc_std"]], digits = 3), getSignificanceDenote(round(rowPValue[[4]], digits = 3))),
+    paste0(round(rowCorPP[["Brake_u"]], digits = 3), getSignificanceDenote(round(rowPValue[[5]], digits = 3))),
+    paste0(round(rowCorPP[["Brake_std"]], digits = 3), getSignificanceDenote(round(rowPValue[[6]], digits = 3))),
+    paste0(round(rowCorPP[["Steering_u"]], digits = 3), getSignificanceDenote(round(rowPValue[[7]], digits = 3))),
+    paste0(round(rowCorPP[["Steering_std"]], digits = 3), getSignificanceDenote(round(rowPValue[[8]], digits = 3)))
+  )
 
   # Draw
   if (!skipPlot) {
     if (savePlot) {
-      jpeg(str_interp("./plots/correlation/corrMatrix_P${p}_${tPre}s_Next_${tNext}s.jpg", list(p=p, tPre = TIME_PREV_SECONDS, tNext = TIME_NEXT_SECONDS)),
+      res <- ifelse(response=="ppNext", "PP", ifelse(response=="HRNext", "HR", "BR"))
+      jpeg(str_interp("./plots/correlation/${res}/corrMatrix_P${p}_${tPre}s_Next_${tNext}s.jpg", list(p=p, res=res, tPre = TIME_PREV_SECONDS, tNext = TIME_NEXT_SECONDS)),
            width = 960,height = 1040, res=140)
     }
     title <- paste0("Correlation Matrix of Subject #", p)
-    corNames <- CORRELATION_NAMES
-    corrplot(corMatrix, method = "circle", type = "lower", title = "", mar = c(1, 6, 7, 0), col = col, tl.col = "white", tl.pos='n')
-    text(-0.2, 9:1, corNames, cex=1.3)
-    text(1:9, c(10:2) + 0.2, corNames, srt=90, cex=1.3)
+    
+    # Draw corr plot
+    corrplot(corMatrix, p.mat=pTest$p, method = "circle", type = "lower", title = "", mar = c(1, 6, 7, 0), col = col, tl.col = "white", tl.pos='n',
+             insig = "label_sig", sig.level = c(.001, .01, .05), pch.cex = .9, pch.col = "white")
+    # Draw texts
+    text(-0.2, 9:1, corNames, cex=1.4)
+    text(1:9, c(10:2) + 0.2, corNames, srt=90, cex=1.4)
+    # Draw emphasized box
+    delta <- 0.5
+    rect(0 + delta, 0 + delta + 0.02, 8 + delta, 1 + delta, border="red", lwd=2)
     if (savePlot) {
       dev.off()
     }
@@ -259,9 +339,10 @@ computeAndPlotCorrelationOfAllSubjects <- function(all, window=5, skipPlot=F, sa
 ################ 4. Clustering #########################
 getClusterName <- function(s, clusters) {
   sID <- str_replace(s, "Subject ", "")
-  if (str_sub(sID, 1, 1) != "#") {
-    sID <- paste0("#", sID)
-  }
+  sID <- str_replace(sID, "#", "S")
+  # if (str_sub(sID, 1, 1) != "#") {
+  #   sID <- paste0("#", sID)
+  # }
   return(paste0("C", clusters[sID]))
 }
 
@@ -275,12 +356,20 @@ getClusterName <- function(s, clusters) {
 plotLinearModel <- function(p, all, window=5, usePhysiological = F) {
   pData <- getSampleSegmentedData(p, all, window)
   if (usePhysiological) {
-    linearModel <- lm(ppLogNormalized ~ Speed_u + Speed_std + Acc_u + Acc_std + Brake_u + Brake_std + Steering_u + Steering_std + HR + BR, data = pData)
+    linearModel <- lm(ppLogNormalized ~ 
+                        Speed_u + Speed_std + 
+                        Acc_u + Acc_std + 
+                        Brake_u + Brake_std + 
+                        Steering_u + Steering_std + HR + BR, data = pData)
     # Diagnostic
     plot(linearModel, caption = paste0("Linear Model (with Physiological) of Subject #", p), which = 1)
     return(linearModel)
   } else {
-    linearModel <- lm(ppLogNormalized ~ Speed_u + Speed_std + Acc_u + Acc_std + Brake_u + Brake_std + Steering_u + Steering_std, data = pData)
+    linearModel <- lm(ppLogNormalized ~ 
+                        Speed_u + Speed_std + 
+                        Acc_u + Acc_std + 
+                        # Brake_u + Brake_std + 
+                        Steering_u + Steering_std, data = pData)
     # Diagnostic
     plot(linearModel, caption = paste0("Linear Model (without Physiological) of Subject #", p), which = 1)
     return(linearModel)
@@ -299,9 +388,18 @@ plotLinearModelForAllSubjects <- function(all, window=5, usePhysiological = F, r
     pData <- pData[!(pData$Subject %in% c("11")), ]
   }
   if (usePhysiological) {
-    linearModelAll <- lmer(ppLogNormalized ~ (1 | Subject) + Speed_u + Speed_std + Acc_u + Acc_std + Brake_u + Brake_std + Steering_u + Steering_std + HR + BR, data = pData, REML = T)
+    linearModelAll <- lmer(ppLogNormalized ~ (1 | Subject) + 
+                             Speed_u + Speed_std + 
+                             Acc_u + Acc_std + 
+                             Brake_u + Brake_std + 
+                             Steering_u + Steering_std + 
+                             HR + BR, data = pData, REML = T)
   } else {
-    linearModelAll <- lmer(ppLogNormalized ~ (1 | Subject) + Speed_u + Speed_std + Acc_u + Acc_std + Brake_u + Brake_std + Steering_u + Steering_std, data = pData, REML = T)
+    linearModelAll <- lmer(ppLogNormalized ~ (1 | Subject) + 
+                             Speed_u + Speed_std + 
+                             Acc_u + Acc_std + 
+                             # Brake_u + Brake_std + 
+                             Steering_u + Steering_std, data = pData, REML = T)
   }
   return(linearModelAll)
 }

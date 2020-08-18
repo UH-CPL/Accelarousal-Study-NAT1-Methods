@@ -1,5 +1,5 @@
 # Driver Prediction
-Predict types of drivers based on data from 2 studies: On-road Driving Study (ORD) and Test Track Driving Study 1 (TTD1).
+Predict types of drivers based on data from 2 studies: On-road Driving (ORD) study and Test Track Driving 1 (TTD1) study.
 
 ## Getting Started
 ### Prerequisites

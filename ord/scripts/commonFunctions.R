@@ -282,7 +282,7 @@ computeAndPlotCorrelation <- function(p, all, behavioralMatrix, behavioralMatrix
     
     # Draw corr plot
     corrplot(corMatrix, p.mat=pTest$p, method = "circle", type = "lower", title = "", mar = c(1, 6, 7, 0), col = col, tl.col = "white", tl.pos='n',
-             insig = "label_sig", sig.level = c(.001, .01, .05), pch.cex = .9, pch.col = "white")
+             insig = "label_sig", sig.level = c(.001, .01, .05), pch.cex = .9, pch.col = "black")
     # Draw texts
     text(-0.2, 9:1, corNames, cex=1.4)
     text(1:9, c(10:2) + 0.2, corNames, srt=90, cex=1.4)
@@ -299,14 +299,15 @@ computeAndPlotCorrelation <- function(p, all, behavioralMatrix, behavioralMatrix
 # @param all: Data frame of all subjects
 # @param skipPlot: disable plotting function
 # @returns: void
-computeAndPlotCorrelationOfAllSubjects <- function(all, window=5, skipPlot=F, savePlot=F) {
+computeAndPlotCorrelationOfAllSubjects <- function(all, window=5, skipPlot=F, savePlot=F, response="ppNext", group=NA, groupName='All') {
   # Select data
   pCorrData <- all %>% select(
     ppNext,
     Speed_u, Speed_std,
     Acc_u, Acc_std, 
     Brake_u, Brake_std, 
-    Steering_u, Steering_std
+    Steering_u, Steering_std,
+    Subject
   )
   
   # Sample data
@@ -316,18 +317,28 @@ computeAndPlotCorrelationOfAllSubjects <- function(all, window=5, skipPlot=F, sa
   pCorrData$ppNext <- NULL
 
   pCorrData <- pCorrData[!is.na(pCorrData$PP), ]
+  
+  # Filter
+  if (!is.na(group) && length(group) > 0) {
+    pCorrData <- pCorrData[pCorrData$Subject %in% group,]
+  }
+  pCorrData$Subject <- NULL
 
   col <- rev(brewer.pal(n = 10, name = "RdBu"))
   corMatrix <- cor(pCorrData)
+  # Significant test
+  pTest <- cor.mtest(pCorrData, conf.level = .95)
 
   if (!skipPlot) {
     if (savePlot) {
-      jpeg(str_interp("./plots/correlation/corrMatrix_All_${tPre}s_Next_${tNext}s.jpg", list(tPre = TIME_PREV_SECONDS, tNext = TIME_NEXT_SECONDS)),
+      res <- ifelse(response=="ppNext", "PP", ifelse(response=="HRNext", "HR", "BR"))
+      jpeg(str_interp("./plots/correlation/${res}/corrMatrix_${groupName}_${tPre}s_Next_${tNext}s.jpg", list(res=res, groupName=groupName, tPre = TIME_PREV_SECONDS, tNext = TIME_NEXT_SECONDS)),
            width = 960,height = 1040, res=140)
     }
     title <- paste0("Correlation Matrix of All Subjects")
     corNames <- CORRELATION_NAMES
-    corrplot(corMatrix, method = "circle", type = "lower", title = "", mar = c(1, 6, 7, 0), col = col, tl.col = "white", tl.pos='n')
+    corrplot(corMatrix, p.mat=pTest$p, method = "circle", type = "lower", title = "", mar = c(1, 6, 7, 0), col = col, tl.col = "white", tl.pos='n',
+             insig = "label_sig", sig.level = c(.001, .01, .05), pch.cex = .9, pch.col = "black")
     text(-0.2, 9:1, corNames, cex=1.3)
     text(1:9, c(10:2) + 0.2, corNames, srt=90, cex=1.3)
     if (savePlot) {

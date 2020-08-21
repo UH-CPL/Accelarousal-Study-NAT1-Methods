@@ -41,7 +41,7 @@ LINEAR_MODEL_VARIABLES_LATEX <- c("$\\bar{x}_{Speed}$", "$\\s_{Speed}$",
 
 # Time-series Prediction
 GROUP_THRESHOLD <- 0.20
-TIME_PREV_SECONDS <- 20
+TIME_PREV_SECONDS <- 30
 TIME_NEXT_SECONDS <- 5
 
 # Response

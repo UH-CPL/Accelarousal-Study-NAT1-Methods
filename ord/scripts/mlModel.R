@@ -78,11 +78,7 @@ names(importantFeaturesDfs) <- persons
 
 # Train
 trainAndTestModel <- function(p, all, idx = 1, useData = "All", useCluster = F) {
-  if (p %in% c("01", "04", "08", "10")) {
-    window <- ifelse(p == "10", 2.3, 1.7)
-  } else {
-    window <- 1
-  }
+  window <- TIME_PREV_SECONDS
   if (!is.na(p) && idx > 0) {
     pData <- getSampleSegmentedData(p, all, window = window)
   } else {
@@ -124,6 +120,8 @@ trainAndTestModel <- function(p, all, idx = 1, useData = "All", useCluster = F) 
     selectedColumns <- c("clsPP", "Acc_u", "Acc_std")
   } else if (useData == "SpeedAndAcc") {
     selectedColumns <- c("clsPP", "Speed_u", "Speed_std", "Acc_u", "Acc_std")
+  } else if (useData == "SpeedAndAccAndSteering" || useData == "WithoutBrake") {
+    selectedColumns <- c("clsPP", "Speed_u", "Speed_std", "Acc_u", "Acc_std", "Steering_u", "Steering_std")
   } else {
     print("No data selection applied. Please select a value for param `useData`.")
     return(F)

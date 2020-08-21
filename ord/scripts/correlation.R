@@ -35,14 +35,16 @@ behavioralMatrix <- matrix(nrow = length(persons), ncol = length(behavioralColum
 behavioralMatrixWithPValue <- matrix(nrow = length(persons), ncol = length(behavioralColumns))
 
 ###################### 1. Correlation of all Subjects ###################
-computeAndPlotCorrelationOfAllSubjects(all, window=TIME_PREV_SECONDS, skipPlot = F, savePlot=T)
+computeAndPlotCorrelationOfAllSubjects(all, window=TIME_PREV_SECONDS, skipPlot = F, savePlot=T, response=RESPONSE_VAR)
+computeAndPlotCorrelationOfAllSubjects(all, window=TIME_PREV_SECONDS, skipPlot = F, savePlot=T, response=RESPONSE_VAR, group=c("01", "04", "08", "10"), groupName="Normal")
+computeAndPlotCorrelationOfAllSubjects(all, window=TIME_PREV_SECONDS, skipPlot = F, savePlot=T, response=RESPONSE_VAR, group=c("05", "06", "07", "11"), groupName="Accelerophobic")
 
 ###################### 2. Correlation of each Subject ####################
 for (p in persons) {
   computeAndPlotCorrelation(p, all, behavioralMatrix, behavioralMatrixWithPValue, response=RESPONSE_VAR, window=TIME_PREV_SECONDS, rowNo = match(p, persons), skipPlot = F, savePlot=T)
 }
 
-print(behavioralMatrixWithPValue)
+# print(behavioralMatrixWithPValue)
 
 
 

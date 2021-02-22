@@ -1,4 +1,4 @@
-# On-road Driving Study
+# Accelarousal - Naturalistic Driving Study (NAT1)
 
 ## Getting Started
 ### Prerequisites
@@ -45,13 +45,7 @@ Follow instruction at https://github.com/plotly/orca for installation.
 - Run `scripts/clustering.R`
 ### 3. Linear Model
 - Run `scripts/linearModel.R`
-### 4. ML Model
-- Run `scripts/mlModel.R`
-- There are 4 possible XGBoost models that run on different sets of variables:
-    - `All`: Use all variables generated from Speed, Acceleration, Braking, and Steering.
-    - `SpeedOnly`: Use only variables generated from Speed.
-    - `AccOnly`: Use only variables generated from Acceleration.
-    - `SpeedAndAcc`: Use variables generated from Speed, Acceleration (the two show significant P-value in linear Model).
+
 
 ## Additional Tools
 ### Style Guide

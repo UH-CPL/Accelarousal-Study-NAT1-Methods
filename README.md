@@ -1,4 +1,4 @@
-# Accelarousal - Naturalistic Driving Study (NAT1)
+# Accelarousal Study Code - Naturalistic Driving Study (NAT1)
 
 ## Getting Started
 ### Prerequisites
@@ -39,11 +39,11 @@ The Plotly lib needs `orca` as an static image exporting backend.
 Follow instruction at https://github.com/plotly/orca for installation.
 
 ## Script set
-### 1. Correllation Analysis
+### Correllation Analysis
 - Run `scripts/correlation.R`
-### 2. Clustering
+### Clustering
 - Run `scripts/clustering.R`
-### 3. Linear Model
+### Linear Model
 - Run `scripts/linearModel.R`
 
 

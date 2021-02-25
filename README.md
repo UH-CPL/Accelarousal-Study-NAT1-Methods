@@ -1,4 +1,4 @@
-# Accelarousal Study Code - Naturalistic Driving Study (NAT1)
+# Accelarousal Study Methods
 
 ## Getting Started
 ### Prerequisites

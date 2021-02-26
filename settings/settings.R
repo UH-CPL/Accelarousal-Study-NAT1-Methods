@@ -22,8 +22,8 @@ CLUSTER_BRANCH_COLORS <- c("red", "blue", "#999999")
 CLUSTER_LABEL_COLORS <- c("red", "blue", "black")
 
 # Plotly
-PLOTLY_USERNAME <- "thuynh32"
-PLOTLY_API_KEY <- "xcSv1yzujDc1IGEwQlr2"
+PLOTLY_USERNAME <- "<Plotly Username>"
+PLOTLY_API_KEY <- "<Plotly API Key>"
 
 Sys.setenv("plotly_username" = PLOTLY_USERNAME)
 Sys.setenv("plotly_api_key" = PLOTLY_API_KEY)

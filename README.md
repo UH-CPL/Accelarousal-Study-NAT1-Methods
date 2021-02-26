@@ -1,4 +1,4 @@
-# Accelarousal Study Methods
+# Accelarousal Study (NAT1) Methods
 
 ## Getting Started
 ### Prerequisites
@@ -7,7 +7,7 @@
 - Required packages
 
 ### Installing R Packages
-To install required R packages, run script `setup.R` in each study folder.
+To install required R packages, run script `setup.R`.
 
 ## Folder Structure
 - `data`: Raw and processed data.
@@ -28,7 +28,7 @@ TIME_NEXT_SECONDS <- 5
 ```
 
 ### Plotly
-As the project is using Plotly as a visualization tool, you can set up you Plotly account with follow constants.
+As the project is using Plotly as a visualization tool, you can set up your Plotly account in `settings/settings.R`.
 ```R
 PLOTLY_USERNAME <- "<Your Plotly Username>"
 PLOTLY_API_KEY <- "<Your Plotly API Key>"
